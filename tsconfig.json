@@ -1,0 +1,8 @@
+{
+  "extends": "@quasar/app-vite/tsconfig-preset",
+  "include": ["env.d.ts", "src/**/*", "src/**/*.vue"],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "lib": ["DOM", "ES2022"]
+  }
+}
