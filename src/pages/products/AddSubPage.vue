@@ -16,25 +16,26 @@
       </template>
       <template #input>
         <div class="q-gutter-y-md">
-        <q-select
-          v-model="category_id"
-          :options="options"
-          map-options
-          label="選擇類別"
-          outlined
-          class="full-width" />
-        <q-input
-          v-model="name"
-          type="text"
-          label="名稱"
-          outlined
-          :disable="isLoading" />
-        <q-input
-          v-model="description"
-          type="text"
-          label="子類別描述"
-          outlined
-          :disable="isLoading" /></div>
+          <q-select
+            v-model="categoryId"
+            :options="dataStore.cateOptions"
+            map-options
+            label="選擇類別"
+            outlined
+            class="full-width" />
+          <q-input
+            v-model.trim="name"
+            type="text"
+            label="名稱"
+            outlined
+            :disable="isLoading" />
+          <q-input
+            v-model.trim="description"
+            type="text"
+            label="子類別描述"
+            outlined
+            :disable="isLoading" />
+        </div>
       </template>
       <template #submit>
         <q-btn
@@ -43,96 +44,98 @@
           color="primary"
           class="full-width q-mt-md"
           :loading="isLoading"
-          :disable="!category_id || !name || !description"
+          :disable="!categoryId || !name || !description"
           @click.prevent="onSubmitClick" />
       </template>
     </FormCreateNew>
     <!-- /form -->
     <!-- dialog -->
-    <div class="hidden">
-      <q-dialog
-        v-model="errorDialogOpen"
-        persistent
-        transition-show="scale"
-        transition-hide="scale">
-        <q-card class="bg-negative text-white" style="width: 300px">
-          <q-card-section>
-            <div class="text-h6">伺服器錯誤</div>
-          </q-card-section>
-
-          <q-card-section class="q-pt-none">
-            新增失敗，請稍後再試一次。
-          </q-card-section>
-
-          <q-card-actions align="right" class="bg-white text-primary">
-            <q-btn flat label="OK" v-close-popup @click="$router.go(0)" />
-          </q-card-actions>
-        </q-card>
-      </q-dialog>
-      <q-dialog v-model="successDialogOpen" persistent>
-        <q-card class="bg-positive text-white" style="width: 300px">
-          <q-card-section>
-            <div class="text-h6">新增成功</div>
-          </q-card-section>
-
-          <q-card-section class="q-pt-none"> 重新整理 </q-card-section>
-
-          <q-card-actions align="right" class="bg-white text-primary">
-            <q-btn flat label="OK" v-close-popup @click="$router.go(0)" />
-          </q-card-actions>
-        </q-card>
-      </q-dialog>
-    </div>
-    <!-- / dialog -->
+    <DialogResultMsg
+      :open="dialogOpen"
+      :title="dialogInfo.title"
+      :body="dialogInfo.body"
+      @close="dialogOpen = false"
+      @hide="clearAll" />
   </q-page>
 </template>
 <script setup lang="ts">
-import FormCreateNew from 'src/components/FormCreateNew.vue'
-import { ref, onBeforeMount } from 'vue'
+import { ref, onUnmounted } from 'vue'
 import { useMysqlStore } from 'stores/useMysqlStore'
 import { useDataStore } from 'src/stores/useDataStore'
+import FormCreateNew from 'src/components/FormCreateNew.vue'
+import DialogResultMsg from 'src/components/DialogResultMsg.vue'
 
-// form logic
 const mysqlStore = useMysqlStore()
 const dataStore = useDataStore()
+
+// form variables
 interface OptionForCategory {
   label: string
   value: number
 }
-let options: OptionForCategory[] = []
-onBeforeMount(async () => {
-  // await mysqlStore.listAll()
-  // fill options with category
-  // if (dataStore.categories && dataStore.categories.length) {
-  options = dataStore.categories.map((c) => {
-    return { label: c.name, value: c.id }
-  })
-  // }
-})
-const category_id = ref()
+const categoryId = ref<OptionForCategory>()
 const name = ref('')
 const description = ref('')
 const isLoading = ref(false)
+// dialog variables
+const dialogOpen = ref(false)
+const dialogInfo = ref({ title: '', body: '' })
+const timeoutID = ref<NodeJS.Timeout>()
+
 const onSubmitClick = async () => {
   isLoading.value = true
-  // await mysqlStore.create(name.value, description.value, category_id.value)
-  console.log({
-    name: name.value,
-    description: description.value,
-    category_id: category_id.value['value'],
-  })
+  if (categoryId.value) {
+    await mysqlStore.createSub(
+      name.value,
+      description.value,
+      categoryId.value.value
+    )
+  }
+
+  // show error
   if (!mysqlStore.CUDStatus || mysqlStore.CUDStatus.affectedRows < 1) {
-    // open dialog
-    errorDialogOpen.value = true
+    dialogInfo.value.title = mysqlStore.errorStatus
+    dialogInfo.value.body = '新增失敗，請稍後再試一次。'
+    dialogOpen.value = true
     return
   }
-  // open dialog
-  successDialogOpen.value = true
+
+  // update pinia state
+  if (mysqlStore.CUDStatus.insertId && categoryId.value) {
+    const payload = {
+      name: name.value,
+      description: description.value,
+      category_id: categoryId.value.value,
+      id: mysqlStore.CUDStatus.insertId,
+    }
+    dataStore.createSubcategory(payload, categoryId.value.value)
+  }
+
+  // show success
+  dialogInfo.value.title = '新增成功'
+  dialogInfo.value.body = '自動關閉彈出視窗...'
+  dialogOpen.value = true
+  autoClose()
   return
 }
 
-// dialog logic
-const errorDialogOpen = ref(false)
-const successDialogOpen = ref(false)
+const clearAll = () => {
+  dialogOpen.value = false
+  isLoading.value = false
+  categoryId.value = undefined
+  name.value = ''
+  description.value = ''
+  clearTimeout(timeoutID.value)
+}
+
+const autoClose = () => {
+  timeoutID.value = setTimeout(() => {
+    clearAll()
+  }, 2000)
+}
+
+onUnmounted(() => {
+  mysqlStore.clearStatus()
+  clearAll()
+})
 </script>
-<style lang=""></style>

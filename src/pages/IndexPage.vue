@@ -1,15 +1,31 @@
 <template>
-  <q-page class="column items-center justify-evenly">
+  <q-page class="column items-center">
     <h1>產品管理平台</h1>
-    <div v-if="dataStore.categories">系統公告(TBD)</div>
-    <div v-else>
-      <p class="text-negative">伺服器無回應 請聯絡技術人員</p>
+    <div>常用功能：</div>
+    <div class="q-gutter-sm">
+      <q-btn
+        color="primary"
+        icon="check"
+        label="類別總覽"
+        to="/home/list-categories" />
+      <q-btn
+        color="primary"
+        icon="check"
+        label="子類別總覽"
+        to="/home/list-subcategories" />
     </div>
   </q-page>
 </template>
 
 <script setup lang="ts">
+import { onMounted } from 'vue'
+import { useMysqlStore } from 'src/stores/useMysqlStore'
+import { useDataStore } from 'src/stores/useDataStore'
 
-import { useDataStore } from 'stores/useDataStore'
+const mysqlStore = useMysqlStore()
 const dataStore = useDataStore()
+onMounted(async () => {
+  if (!dataStore.categories) await mysqlStore.listAll()
+  if (!dataStore.subcategories) await mysqlStore.listAllSub()
+})
 </script>

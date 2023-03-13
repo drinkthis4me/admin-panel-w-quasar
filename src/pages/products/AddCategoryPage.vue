@@ -16,7 +16,7 @@
       </template>
       <template #input>
         <q-input
-          v-model="name"
+          v-model.trim="name"
           type="text"
           label="名稱"
           outlined
@@ -35,68 +35,70 @@
     </FormCreateNew>
     <!-- /form -->
     <!-- dialog -->
-    <div class="hidden">
-      <q-dialog
-        v-model="errorDialogOpen"
-        persistent
-        transition-show="scale"
-        transition-hide="scale">
-        <q-card class="bg-negative text-white" style="width: 300px">
-          <q-card-section>
-            <div class="text-h6">伺服器錯誤</div>
-          </q-card-section>
-
-          <q-card-section class="q-pt-none">
-            新增失敗，請稍後再試一次。
-          </q-card-section>
-
-          <q-card-actions align="right" class="bg-white text-primary">
-            <q-btn flat label="OK" v-close-popup @click="$router.go(0)" />
-          </q-card-actions>
-        </q-card>
-      </q-dialog>
-      <q-dialog v-model="successDialogOpen" persistent>
-        <q-card class="bg-positive text-white" style="width: 300px">
-          <q-card-section>
-            <div class="text-h6">新增成功</div>
-          </q-card-section>
-
-          <q-card-section class="q-pt-none"> 重新整理 </q-card-section>
-
-          <q-card-actions align="right" class="bg-white text-primary">
-            <q-btn flat label="OK" v-close-popup @click="$router.go(0)" />
-          </q-card-actions>
-        </q-card>
-      </q-dialog>
-
-      <!-- / dialog -->
-    </div>
+    <DialogResultMsg
+      :open="dialogOpen"
+      :title="dialogInfo.title"
+      :body="dialogInfo.body"
+      @close="dialogOpen = false"
+      @hide="clearAll" />
   </q-page>
 </template>
 <script setup lang="ts">
-import FormCreateNew from 'src/components/FormCreateNew.vue'
-import { ref } from 'vue'
+import { ref, onUnmounted } from 'vue'
 import { useMysqlStore } from 'stores/useMysqlStore'
+import { useDataStore } from 'src/stores/useDataStore'
+import FormCreateNew from 'components/FormCreateNew.vue'
+import DialogResultMsg from 'src/components/DialogResultMsg.vue'
 
-// form logic
 const mysqlStore = useMysqlStore()
+const dataStore = useDataStore()
+
+// form variables
 const name = ref('')
 const isLoading = ref(false)
+// dialog variables
+const dialogOpen = ref(false)
+const dialogInfo = ref({ title: '', body: '' })
+const timeoutID = ref<NodeJS.Timeout>()
+
 const onSubmitClick = async () => {
   isLoading.value = true
-  await mysqlStore.create(name.value)
+  await mysqlStore.createCate(name.value)
+
+  // show error
   if (!mysqlStore.CUDStatus || mysqlStore.CUDStatus.affectedRows < 1) {
-    // open dialog
-    errorDialogOpen.value = true
+    dialogInfo.value.title = mysqlStore.errorStatus
+    dialogInfo.value.body = '新增失敗，請稍後再試一次。'
+    dialogOpen.value = true
     return
   }
-  // open dialog
-  successDialogOpen.value = true
+
+  // update pinia state
+  dataStore.createCategory(name.value, mysqlStore.CUDStatus.insertId)
+
+  // show success
+  dialogInfo.value.title = '新增成功'
+  dialogInfo.value.body = '自動關閉彈出視窗...'
+  dialogOpen.value = true
+  autoClose()
   return
 }
 
-// dialog logic
-const errorDialogOpen = ref(false)
-const successDialogOpen = ref(false)
+const clearAll = () => {
+  dialogOpen.value = false
+  isLoading.value = false
+  name.value = ''
+  clearTimeout(timeoutID.value)
+}
+
+const autoClose = () => {
+  timeoutID.value = setTimeout(() => {
+    clearAll()
+  }, 2000)
+}
+
+onUnmounted(() => {
+  mysqlStore.clearStatus()
+  clearAll()
+})
 </script>
-<style lang=""></style>

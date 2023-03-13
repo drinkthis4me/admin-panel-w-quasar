@@ -2,144 +2,182 @@ import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import axios from 'axios'
 import { useDataStore } from './useDataStore'
-import type { Category, Status } from 'src/types/mall'
+import type { Status } from 'src/types/mall'
 
 const ENDPOINT = import.meta.env.VITE_MYSQL_ENDPOINT
 
 export const useMysqlStore = defineStore('mysql', () => {
-  // response from Read(listAll and getOne)
-  const results = ref<Category[]>()
-  // status for Create, Update and Delete
+  // Create, Update and Delete response
   const CUDStatus = ref<Status>()
-  const errorStatus = ref()
+  const errorStatus = ref<any>('伺服器錯誤')
   const dataStore = useDataStore()
 
   const clearStatus = () => {
     CUDStatus.value = undefined
-    errorStatus.value = undefined
+    errorStatus.value = '伺服器錯誤'
   }
 
   const apiGET = async (url: string) => {
     await axios
       .get(url)
-      .then((res) => {
-        results.value = res.data
+      .then(res => {
         dataStore.categories = res.data
       })
-      .catch((err) => {
+      .catch(err => {
         console.log(err)
-        errorStatus.value = err.message
       })
   }
 
   const listAll = async () => {
-    const url = ENDPOINT + '/mall/categories'
+    const url = `${ENDPOINT}/mall/categories`
     await apiGET(url)
   }
 
   const listAllSub = async () => {
-    const url = ENDPOINT + '/mall/subcategories'
+    const url = `${ENDPOINT}/mall/subcategories`
     await axios
       .get(url)
-      .then((res) => {
-        results.value = res.data
+      .then(res => {
         dataStore.subcategories = res.data
       })
-      .catch((err) => {
+      .catch(err => {
         console.log(err)
-        errorStatus.value = err.message
       })
   }
 
-  const getOne = async (id: number, subId?: number) => {
-    let url = `${ENDPOINT}/mall/categories/${id}`
-    if (subId) {
-      url += `/subcategories/${subId}`
-    }
-    await apiGET(url)
-  }
-
-  const create = async (name: string, description?: string, id?: number) => {
+  const createCate = async (name: string) => {
     interface Payload {
       name: string
       description?: string
     }
 
-    let url = `${ENDPOINT}/mall/categories`
+    const url = `${ENDPOINT}/mall/categories`
     const payload: Payload = { name: name }
-    let isDuplicate = false
-
-    if (id && description) {
-      url += `/${id}/subcategories`
-      payload.description = description
-      isDuplicate = dataStore.findDuplicate(name, id)
-    } else {
-      isDuplicate = dataStore.findDuplicate(name)
-    }
+    const isDuplicate = dataStore.findDuplicate(name)
 
     if (isDuplicate) {
-      errorStatus.value = 'Duplicate name found'
-      console.log('Duplicate name found')
-    } else {
-      await axios
-        .post(url, payload)
-        .then((res) => {
-          console.log(res)
-          CUDStatus.value = res.data
-        })
-        .catch((err) => {
-          errorStatus.value = err.message
-          console.log(err)
-        })
-    }
-  }
-
-  const updateOld = async (payload: any, id: number, subId?: number) => {
-    let url = `${ENDPOINT}/mall/categories/${id}`
-    if (subId) {
-      url += `/subcategories/${subId}`
+      errorStatus.value = '名稱重複'
+      return
     }
 
     await axios
-      .put(url, payload)
-      .then((res) => {
-        console.log(res)
+      .post(url, payload)
+      .then(res => {
         CUDStatus.value = res.data
       })
-      .catch((err) => {
-        errorStatus.value = err.message
+      .catch(err => {
+        console.log(err)
+      })
+  }
+  const createSub = async (name: string, description: string, id: number) => {
+    interface Payload {
+      name: string
+      description: string
+    }
+
+    const url = `${ENDPOINT}/mall/categories/${id}/subcategories`
+    const payload: Payload = { name: name, description: description }
+    const isDuplicate = dataStore.findDuplicateSub(name, id)
+
+    if (isDuplicate) {
+      errorStatus.value = '名稱重複'
+      return
+    }
+
+    await axios
+      .post(url, payload)
+      .then(res => {
+        CUDStatus.value = res.data
+      })
+      .catch(err => {
         console.log(err)
       })
   }
 
-  const deleteOld = async (id: number, subId?: number) => {
-    let url = `${ENDPOINT}/mall/categories/${id}`
-    if (subId) {
-      url += `/subcategories/${subId}`
+  const updateCate = async (payload: { name: string }, id: number) => {
+    const url = `${ENDPOINT}/mall/categories/${id}`
+    const isDuplicate = dataStore.findDuplicate(payload.name)
+
+    if (isDuplicate) {
+      errorStatus.value = '名稱重複'
+      return
+    }
+
+    await axios
+      .put(url, payload)
+      .then(res => {
+        CUDStatus.value = res.data
+      })
+      .catch(err => {
+        console.log(err)
+      })
+  }
+
+  interface UpdateSubPayload {
+    name: string
+    description: string
+  }
+  const updateSub = async (payload: UpdateSubPayload, subId: number) => {
+    const url = `${ENDPOINT}/mall/subcategories/${subId}`
+    const isDuplicate = dataStore.findDuplicateSub(payload.name, subId)
+
+    if (isDuplicate) {
+      errorStatus.value = '名稱重複'
+      return
+    }
+
+    await axios
+      .put(url, payload)
+      .then(res => {
+        CUDStatus.value = res.data
+      })
+      .catch(err => {
+        console.log(err)
+      })
+  }
+
+  const deleteCate = async (id: number) => {
+    const url = `${ENDPOINT}/mall/categories/${id}`
+
+    if (dataStore.hasChild(id)) {
+      errorStatus.value = '子類別存在，無法刪除。'
+      return
     }
 
     await axios
       .delete(url)
-      .then((res) => {
-        console.log(res)
+      .then(res => {
         CUDStatus.value = res.data
       })
-      .catch((err) => {
-        errorStatus.value = err.message
+      .catch(err => {
+        console.log(err)
+      })
+  }
+
+  const deleteSub = async (id: number) => {
+    const url = `${ENDPOINT}/mall/subcategories/${id}`
+
+    await axios
+      .delete(url)
+      .then(res => {
+        CUDStatus.value = res.data
+      })
+      .catch(err => {
         console.log(err)
       })
   }
 
   return {
-    results,
     CUDStatus,
     errorStatus,
     clearStatus,
     listAll,
     listAllSub,
-    getOne,
-    create,
-    updateOld,
-    deleteOld,
+    createCate,
+    createSub,
+    updateCate,
+    updateSub,
+    deleteCate,
+    deleteSub,
   }
 })

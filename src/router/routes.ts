@@ -18,12 +18,12 @@ const routes: RouteRecordRaw[] = [
         component: () => import('pages/IndexPage.vue'),
       },
       {
-        path: 'categories',
+        path: 'list-categories',
         name: 'categories list',
         component: () => import('src/pages/products/ListCategoriesPage.vue'),
       },
       {
-        path: 'subcategories',
+        path: 'list-subcategories',
         name: 'subcategories list',
         component: () => import('src/pages/products/ListSubcategoriesPage.vue'),
       },

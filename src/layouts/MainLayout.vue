@@ -1,5 +1,5 @@
 <template>
-  <q-layout view="lHh lpR lFf">
+  <q-layout view="lHh LpR lFf">
     <q-header elevated class="bg-primary text-white">
       <q-toolbar>
         <q-btn dense flat round icon="menu" @click="toggleLeftDrawer" />
@@ -24,7 +24,28 @@
               功能選擇
             </q-item-section>
           </q-item>
-          <DrawerItems :menu-links="menuLinks" />
+          <!-- drawer items -->
+          <DrawerItemProducts :menu-links="productSettings" />
+          <q-item>
+            <q-item-section avatar>
+              <q-icon color="primary" :name="orderSettings.icon" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label class="text-primary">
+                {{ orderSettings.title }}
+              </q-item-label>
+            </q-item-section>
+          </q-item>
+          <q-item>
+            <q-item-section avatar>
+              <q-icon color="primary" :name="userSettings.icon" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label class="text-primary">
+                {{ userSettings.title }}
+              </q-item-label>
+            </q-item-section>
+          </q-item>
         </q-list>
       </q-scroll-area>
     </q-drawer>
@@ -37,50 +58,45 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import DrawerItems from 'components/DrawerItems.vue'
+import DrawerItemProducts from 'src/components/DrawerItemProducts.vue'
 
-const menuLinks = ref([
-  {
-    title: '產品設定',
-    icon: 'storefront',
-    children: [
-      {
-        title: '類別',
-        link: '/home/categories',
-      },
-      {
-        title: '新增類別',
-        link: '/home/add-category',
-      },
-      {
-        title: '子類別',
-        link: '/home/subcategories',
-      },
-      {
-        title: '新增子類別',
-        link: '/home/add-subcategory',
-      },
-      {
-        title: '產品',
-        link: '#',
-      },
-      {
-        title: '新增產品',
-        link: '#',
-      },
-    ],
-  },
-  {
-    title: '訂單設定',
-    icon: 'list',
-    children: [],
-  },
-  {
-    title: '使用者設定',
-    icon: 'manage_accounts',
-    children: [],
-  },
-])
+const productSettings = ref({
+  title: '產品設定',
+  icon: 'storefront',
+  children: [
+    {
+      title: '類別',
+      children: [
+        { title: '類別總覽', link: '/home/list-categories' },
+        { title: '新增類別', link: '/home/add-category' },
+      ],
+    },
+    {
+      title: '子類別',
+      children: [
+        { title: '子類別總覽', link: '/home/list-subcategories' },
+        { title: '新增子類別', link: '/home/add-subcategory' },
+      ],
+    },
+    {
+      title: '產品',
+      children: [
+        { title: '產品總覽', link: '#' },
+        { title: '新增產品', link: '#' },
+      ],
+    },
+  ],
+})
+const orderSettings = ref({
+  title: '訂單設定',
+  icon: 'list',
+  children: [],
+})
+const userSettings = ref({
+  title: '使用者設定',
+  icon: 'manage_accounts',
+  children: [],
+})
 const leftDrawerOpen = ref(false)
 const toggleLeftDrawer = () => {
   leftDrawerOpen.value = !leftDrawerOpen.value

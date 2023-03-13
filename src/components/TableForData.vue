@@ -5,7 +5,7 @@
     :columns="columns"
     row-key="id"
     table-header-class="bg-secondary"
-    no-data-label="伺服器錯誤/查無資料。"
+    no-data-label="查無資料。"
     no-results-label="找不到符合搜尋的資料，試試以其他關鍵字搜尋。"
     rows-per-page-label="顯示行數"
     :rows-per-page-options="[10, 15, 20, 25, 50, 0]"
@@ -13,16 +13,16 @@
     :loading="isLoading">
     <!-- action slot -->
     <template #body-cell-actions="props">
-      <q-td :props="props.value">
+      <q-td>
         <q-btn
           color="primary"
           icon="edit"
           size="sm"
-          @click="emits('editClick', props.row)" />
+          @click="onEditClick(props.row)" />
         <q-btn
           color="negative"
           icon="delete"
-          @click="emits('deleteClick', props.row)"
+          @click="onDeleteClick(props.row)"
           size="sm" />
       </q-td>
     </template>
@@ -57,23 +57,26 @@
       </q-inner-loading>
     </template>
     <!-- /loading state slot -->
-  </q-table>
+  </q-table>  
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { QTableProps } from 'quasar'
+import { QTableProps, useQuasar } from 'quasar'
+import DialogEditCate from './DialogEditCate.vue'
+import DialogDelete from './DialogDelete.vue'
+import DialogEditSub from './DialogEditSub.vue'
 
-// naming conflict: componentProps for TableForData; props for q-table
+const $q = useQuasar()
+
+// variables naming conflict: componentProps for TableForData; props for q-table
 const componentProps = defineProps<{
   rows: QTableProps['rows']
   columns: QTableProps['columns']
   filterId?: number
   title: string
 }>()
-const emits = defineEmits(['editClick', 'deleteClick'])
 
-// Boolean for loading state
 const isLoading = computed(() => {
   return componentProps.rows == null || componentProps.rows.length < 0
 })
@@ -88,4 +91,48 @@ watch(
     }
   }
 )
+
+// logic for actions(edit/delete)
+const currentRow = ref<any>()
+const onEditClick = (row: any) => {
+  currentRow.value = row
+  if (row && row.description) {
+    openDialogEditSub()
+  } else if (row) {
+    openDialogEdit()
+  }
+}
+const onDeleteClick = (row: any) => {
+  currentRow.value = row
+  openDialogDelete()
+}
+const openDialogEdit = () => {
+  $q.dialog({
+    component: DialogEditCate,
+    componentProps: {
+      name: currentRow.value.name,
+      id: currentRow.value.id,
+    },
+  })
+}
+const openDialogEditSub = () => {
+  $q.dialog({
+    component: DialogEditSub,
+    componentProps: {
+      name: currentRow.value.name,
+      subId: currentRow.value.id,
+      description: currentRow.value.description,
+    },
+  })
+}
+const openDialogDelete = () => {
+  $q.dialog({
+    component: DialogDelete,
+    componentProps: {
+      id: currentRow.value.id,
+      name: currentRow.value.name,
+      description: currentRow.value.description,
+    },
+  })
+}
 </script>
