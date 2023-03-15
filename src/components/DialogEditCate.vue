@@ -13,7 +13,7 @@
       <q-card-section class="column" horizontal>
         <div class="text-h5 text-center bg-secondary q-py-sm">編輯類別</div>
         <q-input
-          v-model="editName"
+          v-model="inputName"
           :disable="inputDisalbled"
           label="類別名稱"
           outlined
@@ -58,8 +58,10 @@ const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } =
 const mysqlStore = useMysqlStore()
 const dataStore = useDataStore()
 const $q = useQuasar()
+// inputs
 const statusMessage = ref('')
-const editName = ref(props.category.name)
+const inputName = ref(props.category.name)
+// q-btn
 const inputDisalbled = ref(false)
 const submitDisabled = ref(true)
 const submitLoading = ref(false)
@@ -67,9 +69,9 @@ const timeoutID = ref<NodeJS.Timeout>()
 
 // Disable submit button if input unchanged
 watch(
-  () => editName.value,
+  () => inputName.value,
   () => {
-    if (editName.value === props.category.name) {
+    if (inputName.value === props.category.name) {
       submitDisabled.value = true
     } else {
       submitDisabled.value = false
@@ -81,7 +83,7 @@ watch(
 watch(
   () => props.category.name,
   () => {
-    editName.value = props.category.name
+    inputName.value = props.category.name
   }
 )
 const onEditSubmitClick = async () => {
@@ -90,8 +92,8 @@ const onEditSubmitClick = async () => {
   submitDisabled.value = true
   submitLoading.value = true
   try {
-    if (!props.category.id || !editName.value) throw new Error('no input found')
-    const newCategory = { id: props.category.id, name: editName.value }
+    if (!props.category.id || !inputName.value) throw new Error('no input found')
+    const newCategory = { id: props.category.id, name: inputName.value }
 
     // call api
     await mysqlStore.updateCate(newCategory)
@@ -125,7 +127,7 @@ const autoClose = () => {
 }
 
 const resetAll = () => {
-  editName.value = props.category.name
+  inputName.value = props.category.name
   statusMessage.value = ''
   inputDisalbled.value = false
   submitLoading.value = false

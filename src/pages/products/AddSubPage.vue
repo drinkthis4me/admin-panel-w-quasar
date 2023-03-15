@@ -24,13 +24,13 @@
             outlined
             class="full-width" />
           <q-input
-            v-model.trim="name"
+            v-model.trim="userInput.name"
             type="text"
             label="名稱"
             outlined
             :disable="isLoading" />
           <q-input
-            v-model.trim="description"
+            v-model.trim="userInput.description"
             type="text"
             label="子類別描述"
             outlined
@@ -44,7 +44,7 @@
           color="primary"
           class="full-width q-mt-md"
           :loading="isLoading"
-          :disable="!categoryId || !name || !description"
+          :disable="!categoryId || !userInput.name || !userInput.description"
           @click.prevent="onSubmitClick" />
       </template>
     </FormCreateNew>
@@ -52,7 +52,7 @@
   </q-page>
 </template>
 <script setup lang="ts">
-import { ref, onUnmounted } from 'vue'
+import { ref, reactive, onUnmounted } from 'vue'
 import { useMysqlStore } from 'stores/useMysqlStore'
 import { useDataStore } from 'src/stores/useDataStore'
 import { useQuasar } from 'quasar'
@@ -68,9 +68,11 @@ interface OptionForCategory {
   label: string
   value: number
 }
-const categoryId = ref<OptionForCategory>()
-const name = ref('')
-const description = ref('')
+const categoryId = ref<OptionForCategory>() // the number is: categoryId.value.value
+const userInput = reactive({
+  name: '',
+  description: '',
+})
 const isLoading = ref(false)
 // dialog
 const dialogInfo = ref({ title: '', body: '' })
@@ -81,12 +83,12 @@ const onSubmitClick = async () => {
     if (!categoryId.value) throw new Error('no category id')
 
     // call api
-    const newSubcategoryInput = {
-      name: name.value,
-      description: description.value,
+    const newSubWithoutId = {
+      name: userInput.name,
+      description: userInput.description,
       category_id: categoryId.value.value,
     }
-    await mysqlStore.createSub(newSubcategoryInput)
+    await mysqlStore.createSub(newSubWithoutId)
 
     // error
     isLoading.value = false
@@ -98,10 +100,11 @@ const onSubmitClick = async () => {
     )
       throw new Error('server error')
 
-    //update pinia state
+    // update pinia state
+    // grab the new sub id from api response(CUDStatus)
     const newSubcategory = {
-      name: name.value,
-      description: description.value,
+      name: userInput.name,
+      description: userInput.description,
       category_id: categoryId.value.value,
       id: mysqlStore.CUDStatus.insertId,
     }
@@ -124,8 +127,8 @@ const onSubmitClick = async () => {
 const resetAll = () => {
   isLoading.value = false
   categoryId.value = undefined
-  name.value = ''
-  description.value = ''
+  userInput.name = ''
+  userInput.description = ''
   mysqlStore.clearStatus()
 }
 

@@ -13,14 +13,14 @@
       <q-card-section class="column" horizontal>
         <div class="text-h5 text-center bg-secondary q-py-sm">編輯子類別</div>
         <q-input
-          v-model="editName"
+          v-model="userInput.name"
           :disable="inputDisalbled"
           label="子類別名稱"
           outlined
           color="teal-4"
           class="q-ma-sm"></q-input>
         <q-input
-          v-model="editDescription"
+          v-model="userInput.description"
           :disable="inputDisalbled"
           label="描述"
           outlined
@@ -50,7 +50,7 @@
 </template>
 <script setup lang="ts">
 import { useDialogPluginComponent } from 'quasar'
-import { ref, watch, onUnmounted } from 'vue'
+import { ref, reactive, watch, onUnmounted } from 'vue'
 import { useMysqlStore } from 'src/stores/useMysqlStore'
 import { useDataStore } from 'src/stores/useDataStore'
 import { useQuasar } from 'quasar'
@@ -65,9 +65,13 @@ const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } =
 const mysqlStore = useMysqlStore()
 const dataStore = useDataStore()
 const $q = useQuasar()
+// inputs
 const statusMessage = ref('')
-const editName = ref(props.subcategory.name)
-const editDescription = ref(props.subcategory.description)
+const userInput = reactive({
+  name: props.subcategory.name,
+  description: props.subcategory.description,
+})
+// q-btn
 const inputDisalbled = ref(false)
 const submitDisabled = ref(true)
 const submitLoading = ref(false)
@@ -75,9 +79,9 @@ const timeoutID = ref<NodeJS.Timeout>()
 
 // Disable submit button if inputs unchanged
 watch(
-  () => editName.value,
+  () => userInput.name,
   () => {
-    if (editName.value === props.subcategory.name) {
+    if (userInput.name === props.subcategory.name) {
       submitDisabled.value = true
     } else {
       submitDisabled.value = false
@@ -86,9 +90,9 @@ watch(
   { immediate: true }
 )
 watch(
-  () => editDescription.value,
+  () => userInput.description,
   () => {
-    if (editDescription.value === props.subcategory.description) {
+    if (userInput.description === props.subcategory.description) {
       submitDisabled.value = true
     } else {
       submitDisabled.value = false
@@ -100,8 +104,8 @@ watch(
 watch(
   () => props.subcategory.name,
   () => {
-    editName.value = props.subcategory.name
-    editDescription.value = props.subcategory.description
+    userInput.name = props.subcategory.name
+    userInput.description = props.subcategory.description
   }
 )
 const onEditSubmitClick = async () => {
@@ -112,8 +116,8 @@ const onEditSubmitClick = async () => {
 
   try {
     if (
-      !editName.value ||
-      !editDescription.value ||
+      !userInput.name ||
+      !userInput.description ||
       !props.subcategory.category_id ||
       !props.subcategory.category_id
     ) {
@@ -121,8 +125,8 @@ const onEditSubmitClick = async () => {
     }
     const newSubcategory = {
       id: props.subcategory.id,
-      name: editName.value,
-      description: editDescription.value,
+      name: userInput.name,
+      description: userInput.description,
       category_id: props.subcategory.category_id,
     }
 
@@ -158,8 +162,8 @@ const autoClose = () => {
   }, 200)
 }
 const resetAll = () => {
-  editName.value = props.subcategory.name
-  editDescription.value = props.subcategory.description
+  userInput.name = props.subcategory.name
+  userInput.description = props.subcategory.description
   statusMessage.value = ''
   inputDisalbled.value = false
   submitLoading.value = false

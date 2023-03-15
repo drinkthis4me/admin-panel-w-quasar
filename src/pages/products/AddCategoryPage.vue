@@ -16,7 +16,7 @@
       </template>
       <template #input>
         <q-input
-          v-model.trim="name"
+          v-model.trim="inputName"
           type="text"
           label="名稱"
           outlined
@@ -29,7 +29,7 @@
           color="primary"
           class="full-width q-mt-md"
           :loading="isLoading"
-          :disable="!name"
+          :disable="!inputName"
           @click.prevent="onSubmitClick" />
       </template>
     </FormCreateNew>
@@ -49,7 +49,7 @@ const dataStore = useDataStore()
 const $q = useQuasar()
 
 // form
-const name = ref('')
+const inputName = ref('')
 const isLoading = ref(false)
 // dialog
 const dialogInfo = ref({ status: '', title: '', body: '' })
@@ -57,10 +57,10 @@ const dialogInfo = ref({ status: '', title: '', body: '' })
 const onSubmitClick = async () => {
   isLoading.value = true
   try {
-    if (!name.value) throw new Error('no input found')
+    if (!inputName.value) throw new Error('no input found')
 
     // call api
-    await mysqlStore.createCate(name.value)
+    await mysqlStore.createCate(inputName.value)
 
     // error
     isLoading.value = false
@@ -73,7 +73,7 @@ const onSubmitClick = async () => {
       throw new Error('server error')
 
     //update pinia state
-    dataStore.createCategory(name.value, mysqlStore.CUDStatus.insertId)
+    dataStore.createCategory(inputName.value, mysqlStore.CUDStatus.insertId)
 
     // show success
     dialogInfo.value.status = 'positive'
@@ -93,7 +93,7 @@ const onSubmitClick = async () => {
 
 const resetAll = () => {
   isLoading.value = false
-  name.value = ''
+  inputName.value = ''
   mysqlStore.clearStatus()
 }
 
