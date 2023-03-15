@@ -20,12 +20,11 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { useMysqlStore } from 'src/stores/useMysqlStore'
-import { useDataStore } from 'src/stores/useDataStore'
 
 const mysqlStore = useMysqlStore()
-const dataStore = useDataStore()
+
 onMounted(async () => {
-  if (!dataStore.categories) await mysqlStore.listAll()
-  if (!dataStore.subcategories) await mysqlStore.listAllSub()
+  if (!mysqlStore.categories) await mysqlStore.listAll()
+  if (!mysqlStore.subcategories) await mysqlStore.listAllSub()
 })
 </script>

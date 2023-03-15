@@ -11,16 +11,7 @@
     transition-hide="scale">
     <q-card style="width: 300px">
       <q-card-section class="column" horizontal>
-        <div class="text-h5 text-center bg-teal-4 q-py-sm">編輯</div>
-        <div
-          v-show="statusMessage"
-          :class="[
-            'text-center text-h5 ',
-            statusMessage == '更新成功!' ? 'text-positive' : 'text-negative',
-          ]">
-          {{ statusMessage }}
-        </div>
-
+        <div class="text-h5 text-center bg-secondary q-py-sm">編輯子類別</div>
         <q-input
           v-model="editName"
           :disable="inputDisalbled"
@@ -44,8 +35,7 @@
           color="primary"
           class="btn-width"
           v-close-popup
-          @click="onDialogCancel"
-           />
+          @click="onDialogCancel" />
         <q-btn
           type="submit"
           label="確定"
@@ -60,25 +50,24 @@
 </template>
 <script setup lang="ts">
 import { useDialogPluginComponent } from 'quasar'
-
 import { ref, watch, onUnmounted } from 'vue'
 import { useMysqlStore } from 'src/stores/useMysqlStore'
 import { useDataStore } from 'src/stores/useDataStore'
-const props = defineProps<{
-  name: string
-  subId: number
-  description: string 
-}>()
+import { useQuasar } from 'quasar'
+import type { Subcategory } from 'src/types/subcategory'
 
+const props = defineProps<{
+  subcategory: Subcategory
+}>()
 defineEmits([...useDialogPluginComponent.emits])
 const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } =
   useDialogPluginComponent()
-
 const mysqlStore = useMysqlStore()
 const dataStore = useDataStore()
+const $q = useQuasar()
 const statusMessage = ref('')
-const editName = ref(props.name)
-const editDescription = ref(props.description)
+const editName = ref(props.subcategory.name)
+const editDescription = ref(props.subcategory.description)
 const inputDisalbled = ref(false)
 const submitDisabled = ref(true)
 const submitLoading = ref(false)
@@ -88,7 +77,7 @@ const timeoutID = ref<NodeJS.Timeout>()
 watch(
   () => editName.value,
   () => {
-    if (editName.value === props.name) {
+    if (editName.value === props.subcategory.name) {
       submitDisabled.value = true
     } else {
       submitDisabled.value = false
@@ -99,7 +88,7 @@ watch(
 watch(
   () => editDescription.value,
   () => {
-    if (editDescription.value === props.description) {
+    if (editDescription.value === props.subcategory.description) {
       submitDisabled.value = true
     } else {
       submitDisabled.value = false
@@ -109,10 +98,10 @@ watch(
 )
 // reset q-inputs
 watch(
-  () => props.name,
+  () => props.subcategory.name,
   () => {
-    editName.value = props.name
-    editDescription.value = props.description
+    editName.value = props.subcategory.name
+    editDescription.value = props.subcategory.description
   }
 )
 const onEditSubmitClick = async () => {
@@ -120,19 +109,43 @@ const onEditSubmitClick = async () => {
   inputDisalbled.value = true
   submitDisabled.value = true
   submitLoading.value = true
-  // call api
-  const payload = { name: editName.value, description: editDescription.value }
-  await mysqlStore.updateSub(payload, props.subId)
 
-  if (!mysqlStore.CUDStatus || mysqlStore.CUDStatus.affectedRows <= 0) {
-    statusMessage.value = mysqlStore.errorStatus
-    return
-  } else {
-    statusMessage.value = '更新成功!'
+  try {
+    if (
+      !editName.value ||
+      !editDescription.value ||
+      !props.subcategory.category_id ||
+      !props.subcategory.category_id
+    ) {
+      throw new Error('no input found')
+    }
+    const newSubcategory = {
+      id: props.subcategory.id,
+      name: editName.value,
+      description: editDescription.value,
+      category_id: props.subcategory.category_id,
+    }
+
+    // call api
+    await mysqlStore.updateSub(newSubcategory)
+
+    // error
+    submitLoading.value = false
+    if (mysqlStore.errorStatus) throw new Error('client error')
+    if (!mysqlStore.CUDStatus || mysqlStore.CUDStatus.affectedRows <= 0)
+      throw new Error('server error')
+
     // update pinia state
+    dataStore.updateSubcategories(newSubcategory)
 
-    dataStore.updateSubcategories(payload, props.subId)
-    // close dialog
+    // show notify
+    statusMessage.value = '更新成功!'
+    triggerPpsitive()
+  } catch (error) {
+    console.log(error)
+    statusMessage.value = mysqlStore.errorStatus
+    triggerNegative()
+  } finally {
     autoClose()
     return
   }
@@ -142,22 +155,35 @@ const autoClose = () => {
   timeoutID.value = setTimeout(() => {
     resetAll()
     onDialogOK()
-  }, 2000)
+  }, 200)
 }
 const resetAll = () => {
-  editName.value = props.name
-  editDescription.value = props.description
+  editName.value = props.subcategory.name
+  editDescription.value = props.subcategory.description
   statusMessage.value = ''
   inputDisalbled.value = false
   submitLoading.value = false
   submitDisabled.value = false
   clearTimeout(timeoutID.value)
   mysqlStore.clearStatus()
- 
 }
 onUnmounted(() => {
-  mysqlStore.clearStatus()
+  resetAll()
 })
+const triggerNegative = () => {
+  $q.notify({
+    type: 'negative',
+    message: statusMessage.value,
+    actions: [{ icon: 'cancel', color: 'white' }],
+  })
+}
+const triggerPpsitive = () => {
+  $q.notify({
+    type: 'positive',
+    message: statusMessage.value,
+    actions: [{ icon: 'cancel', color: 'white' }],
+  })
+}
 </script>
 
 <style lang="scss" scoped>

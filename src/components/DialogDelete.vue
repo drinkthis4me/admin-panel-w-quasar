@@ -11,21 +11,20 @@
     transition-hide="scale">
     <q-card style="width: 300px">
       <q-card-section class="column" horizontal>
-        <div class="text-h5 text-center text-white bg-red-7 q-py-sm">
-          確認刪除類別
-        </div>
         <div
-          v-show="statusMessage"
-          :class="[
-            'text-center text-h5 ',
-            statusMessage == '刪除成功!' ? 'text-positive' : 'text-negative',
-          ]">
-          {{ statusMessage }}
+          v-if="'description' in rowProps.someCategory"
+          class="text-h5 text-center bg-secondary q-py-sm">
+          確認刪除子類別?
+        </div>
+        <div v-else class="text-h5 text-center bg-secondary q-py-sm">
+          確認刪除類別?
         </div>
         <div class="q-mx-md q-my-sm alignMe">
-          <div><span> ID </span>{{ id }}</div>
-          <div><span> 名稱 </span>{{ name }}</div>
-          <div v-if="description"><span>描述</span>{{ description }}</div>
+          <div><span> ID </span>{{ someCategory.id }}</div>
+          <div><span> 名稱 </span>{{ someCategory.name }}</div>
+          <div v-if="'description' in rowProps.someCategory">
+            <span>描述</span>{{ someCategory.description }}
+          </div>
         </div>
       </q-card-section>
       <q-separator inset />
@@ -50,49 +49,61 @@
 </template>
 <script setup lang="ts">
 import { useDialogPluginComponent } from 'quasar'
-
 import { ref, onUnmounted } from 'vue'
 import { useMysqlStore } from 'src/stores/useMysqlStore'
 import { useDataStore } from 'src/stores/useDataStore'
-
-const props = defineProps<{
-  name: string
-  id: number
-  description?: string
+import { useQuasar } from 'quasar'
+const rowProps = defineProps<{
+  someCategory: any
 }>()
+
 defineEmits([...useDialogPluginComponent.emits])
 
 const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } =
   useDialogPluginComponent()
-
 const mysqlStore = useMysqlStore()
 const dataStore = useDataStore()
+const $q = useQuasar()
 const statusMessage = ref('')
 const submitLoading = ref(false)
 const submitDisabled = ref(false)
 const timeoutID = ref<NodeJS.Timeout>()
 
 const onDeleteSubmitClick = async () => {
+  // disable btn
   submitLoading.value = true
   submitDisabled.value = true
-  if (props.description) {
-    await mysqlStore.deleteSub(props.id)
-  } else {
-    await mysqlStore.deleteCate(props.id)
-  }
+  try {
+    if (!rowProps.someCategory.id) throw new Error('no id found')
 
-  if (!mysqlStore.CUDStatus || mysqlStore.CUDStatus.affectedRows <= 0) {
-    statusMessage.value = mysqlStore.errorStatus
-    return
-  } else {
-    statusMessage.value = '刪除成功!'
-    // update pinia store
-    if (props.description) {
-      dataStore.deleteSubategory(props.id)
+    // call api
+    if ('description' in rowProps.someCategory) {
+      await mysqlStore.deleteSub(rowProps.someCategory.id)
     } else {
-      dataStore.deleteCategory(props.id)
+      await mysqlStore.deleteCate(rowProps.someCategory.id)
     }
 
+    // error
+    submitLoading.value = false
+    if (mysqlStore.errorStatus) throw new Error('client error')
+    if (!mysqlStore.CUDStatus || mysqlStore.CUDStatus.affectedRows <= 0)
+      throw new Error('server error')
+
+    // update pinia state
+    if ('description' in rowProps.someCategory) {
+      dataStore.deleteSubategory(rowProps.someCategory.id)
+    } else {
+      dataStore.deleteCategory(rowProps.someCategory.id)
+    }
+
+    // show notify
+    statusMessage.value = '刪除成功!'
+    triggerPpsitive()
+  } catch (error) {
+    console.log(error)
+    statusMessage.value = mysqlStore.errorStatus || '伺服器錯誤'
+    triggerNegative()
+  } finally {
     autoClose()
     return
   }
@@ -101,9 +112,8 @@ const autoClose = () => {
   timeoutID.value = setTimeout(() => {
     resetAll()
     onDialogOK()
-  }, 2000)
+  }, 200)
 }
-
 const resetAll = () => {
   statusMessage.value = ''
   submitLoading.value = false
@@ -111,10 +121,23 @@ const resetAll = () => {
   clearInterval(timeoutID.value)
   mysqlStore.clearStatus()
 }
-
 onUnmounted(() => {
-  mysqlStore.clearStatus()
+  resetAll()
 })
+const triggerNegative = () => {
+  $q.notify({
+    type: 'negative',
+    message: statusMessage.value,
+    actions: [{ icon: 'cancel', color: 'white' }],
+  })
+}
+const triggerPpsitive = () => {
+  $q.notify({
+    type: 'positive',
+    message: statusMessage.value,
+    actions: [{ icon: 'cancel', color: 'white' }],
+  })
+}
 </script>
 <style lang="scss" scoped>
 .alignMe span {

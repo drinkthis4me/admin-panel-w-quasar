@@ -34,71 +34,81 @@
       </template>
     </FormCreateNew>
     <!-- /form -->
-    <!-- dialog -->
-    <DialogResultMsg
-      :open="dialogOpen"
-      :title="dialogInfo.title"
-      :body="dialogInfo.body"
-      @close="dialogOpen = false"
-      @hide="clearAll" />
   </q-page>
 </template>
 <script setup lang="ts">
 import { ref, onUnmounted } from 'vue'
 import { useMysqlStore } from 'stores/useMysqlStore'
 import { useDataStore } from 'src/stores/useDataStore'
+import { useQuasar } from 'quasar'
 import FormCreateNew from 'components/FormCreateNew.vue'
 import DialogResultMsg from 'src/components/DialogResultMsg.vue'
 
 const mysqlStore = useMysqlStore()
 const dataStore = useDataStore()
+const $q = useQuasar()
 
-// form variables
+// form
 const name = ref('')
 const isLoading = ref(false)
-// dialog variables
-const dialogOpen = ref(false)
-const dialogInfo = ref({ title: '', body: '' })
-const timeoutID = ref<NodeJS.Timeout>()
+// dialog
+const dialogInfo = ref({ status: '', title: '', body: '' })
 
 const onSubmitClick = async () => {
   isLoading.value = true
-  await mysqlStore.createCate(name.value)
+  try {
+    if (!name.value) throw new Error('no input found')
 
-  // show error
-  if (!mysqlStore.CUDStatus || mysqlStore.CUDStatus.affectedRows < 1) {
-    dialogInfo.value.title = mysqlStore.errorStatus
+    // call api
+    await mysqlStore.createCate(name.value)
+
+    // error
+    isLoading.value = false
+    if (mysqlStore.errorStatus) throw new Error('user error')
+    if (
+      !mysqlStore.CUDStatus ||
+      mysqlStore.CUDStatus.affectedRows < 1 ||
+      !mysqlStore.CUDStatus.insertId
+    )
+      throw new Error('server error')
+
+    //update pinia state
+    dataStore.createCategory(name.value, mysqlStore.CUDStatus.insertId)
+
+    // show success
+    dialogInfo.value.status = 'positive'
+    dialogInfo.value.title = '新增成功'
+    dialogInfo.value.body = '自動關閉彈出視窗...'
+    // dialogOpen.value = true
+  } catch (error) {
+    console.log(error)
+    dialogInfo.value.status = 'negative'
+    dialogInfo.value.title = mysqlStore.errorStatus || '伺服器錯誤'
     dialogInfo.value.body = '新增失敗，請稍後再試一次。'
-    dialogOpen.value = true
+  } finally {
+    openDialog()
     return
   }
-
-  // update pinia state
-  dataStore.createCategory(name.value, mysqlStore.CUDStatus.insertId)
-
-  // show success
-  dialogInfo.value.title = '新增成功'
-  dialogInfo.value.body = '自動關閉彈出視窗...'
-  dialogOpen.value = true
-  autoClose()
-  return
 }
 
-const clearAll = () => {
-  dialogOpen.value = false
+const resetAll = () => {
   isLoading.value = false
   name.value = ''
-  clearTimeout(timeoutID.value)
+  mysqlStore.clearStatus()
 }
 
-const autoClose = () => {
-  timeoutID.value = setTimeout(() => {
-    clearAll()
-  }, 2000)
+const openDialog = () => {
+  $q.dialog({
+    component: DialogResultMsg,
+    componentProps: {
+      message: dialogInfo.value,
+    },
+  }).onDismiss(() => {
+    resetAll()
+  })
 }
 
 onUnmounted(() => {
-  mysqlStore.clearStatus()
-  clearAll()
+  resetAll()
 })
 </script>

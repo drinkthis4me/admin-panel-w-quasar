@@ -13,7 +13,7 @@
     <div class="q-pa-sm row full-width" style="max-width: 500px">
       <q-select
         v-model="selectedCategory"
-        :options="dataStore.cateOptions"
+        :options="mysqlStore.optionsOfCategories"
         use-chips
         multiple
         emit-value
@@ -25,7 +25,7 @@
         transition-hide="scale"
         class="full-width" />
     </div>
-    <div class="q-pa-sm" style="max-width: 700px">
+    <div class="q-pa-sm full-width" style="max-width: 800px">
       <TableForData :title="'子類別'" :rows="filteredRows" :columns="columns" />
     </div>
   </q-page>
@@ -34,10 +34,11 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { QTableProps } from 'quasar'
-import { useDataStore } from 'src/stores/useDataStore'
+import { useMysqlStore } from 'src/stores/useMysqlStore'
 import TableForData from 'components/TableForData.vue'
 
-const dataStore = useDataStore()
+const mysqlStore = useMysqlStore()
+
 // table columns
 const columns = ref<QTableProps['columns']>([
   {
@@ -68,7 +69,8 @@ const columns = ref<QTableProps['columns']>([
     name: 'category_id',
     label: '分類',
     field: 'category_id',
-    format: val => `${dataStore.cateOptions.find(o => o.value == val)?.label}`,
+    format: val =>
+      `${mysqlStore.optionsOfCategories.find(o => o.value == val)?.label}`,
     align: 'center',
     sortable: true,
   },
@@ -76,7 +78,7 @@ const columns = ref<QTableProps['columns']>([
     name: 'actions',
     label: '編輯/刪除',
     field: 'actions',
-    align: 'left',
+    align: 'center',
   },
 ])
 
@@ -89,14 +91,13 @@ const filteredRows = computed<QTableProps['rows']>(() => {
   if (selectedCategory.value) {
     const selectedIds = Object.values(selectedCategory.value)
     if (selectedIds.length > 0) {
-      return dataStore.subcategories?.filter(row =>
+      return mysqlStore.subcategories?.filter(row =>
         selectedIds.includes(row.category_id)
       )
-    } else return dataStore.subcategories
+    } else return mysqlStore.subcategories
   }
 
   // default: all
-  return dataStore.subcategories
+  return mysqlStore.subcategories
 })
-
 </script>

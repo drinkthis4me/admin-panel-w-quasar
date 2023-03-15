@@ -11,16 +11,7 @@
     transition-hide="scale">
     <q-card style="width: 300px">
       <q-card-section class="column" horizontal>
-        <div class="text-h5 text-center bg-teal-4 q-py-sm">編輯</div>
-        <div
-          v-show="statusMessage"
-          :class="[
-            'text-center text-h5 ',
-            statusMessage == '更新成功!' ? 'text-positive' : 'text-negative',
-          ]">
-          {{ statusMessage }}
-        </div>
-
+        <div class="text-h5 text-center bg-secondary q-py-sm">編輯類別</div>
         <q-input
           v-model="editName"
           :disable="inputDisalbled"
@@ -55,19 +46,20 @@ import { useDialogPluginComponent } from 'quasar'
 import { ref, watch, onUnmounted } from 'vue'
 import { useMysqlStore } from 'src/stores/useMysqlStore'
 import { useDataStore } from 'src/stores/useDataStore'
+import { useQuasar } from 'quasar'
+import type { Basetype } from 'src/types/basetype'
 const props = defineProps<{
-  name: string
-  id: number
+  category: Basetype
 }>()
 defineEmits([...useDialogPluginComponent.emits])
 
 const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } =
   useDialogPluginComponent()
-
 const mysqlStore = useMysqlStore()
 const dataStore = useDataStore()
+const $q = useQuasar()
 const statusMessage = ref('')
-const editName = ref(props.name)
+const editName = ref(props.category.name)
 const inputDisalbled = ref(false)
 const submitDisabled = ref(true)
 const submitLoading = ref(false)
@@ -77,7 +69,7 @@ const timeoutID = ref<NodeJS.Timeout>()
 watch(
   () => editName.value,
   () => {
-    if (editName.value === props.name) {
+    if (editName.value === props.category.name) {
       submitDisabled.value = true
     } else {
       submitDisabled.value = false
@@ -87,9 +79,9 @@ watch(
 )
 // reset q-inputs
 watch(
-  () => props.name,
+  () => props.category.name,
   () => {
-    editName.value = props.name
+    editName.value = props.category.name
   }
 )
 const onEditSubmitClick = async () => {
@@ -97,18 +89,29 @@ const onEditSubmitClick = async () => {
   inputDisalbled.value = true
   submitDisabled.value = true
   submitLoading.value = true
-  // call api
-  const payload = { name: editName.value }
-  await mysqlStore.updateCate(payload, props.id)
+  try {
+    if (!props.category.id || !editName.value) throw new Error('no input found')
+    const newCategory = { id: props.category.id, name: editName.value }
 
-  if (!mysqlStore.CUDStatus || mysqlStore.CUDStatus.affectedRows <= 0) {
-    statusMessage.value = mysqlStore.errorStatus
-    return
-  } else {
-    statusMessage.value = '更新成功!'
+    // call api
+    await mysqlStore.updateCate(newCategory)
+
+    // error
+    submitLoading.value = false
+    if (mysqlStore.errorStatus) throw new Error('client error')
+    if (!mysqlStore.CUDStatus || mysqlStore.CUDStatus.affectedRows <= 0)
+      throw new Error('server error')
+
     // update pinia state
-    dataStore.updateCategories(payload.name, props.id)
-    // close dialog
+    dataStore.updateCategories(newCategory)
+
+    statusMessage.value = '更新成功!'
+    triggerPpsitive()
+  } catch (error) {
+    console.log(error)
+    statusMessage.value = mysqlStore.errorStatus || '伺服器錯誤'
+    triggerNegative()
+  } finally {
     autoClose()
     return
   }
@@ -118,11 +121,11 @@ const autoClose = () => {
   timeoutID.value = setTimeout(() => {
     resetAll()
     onDialogOK()
-  }, 2000)
+  }, 200)
 }
 
 const resetAll = () => {
-  editName.value = props.name
+  editName.value = props.category.name
   statusMessage.value = ''
   inputDisalbled.value = false
   submitLoading.value = false
@@ -132,8 +135,23 @@ const resetAll = () => {
 }
 
 onUnmounted(() => {
-  mysqlStore.clearStatus()
+  resetAll()
 })
+
+const triggerNegative = () => {
+  $q.notify({
+    type: 'negative',
+    message: statusMessage.value,
+    actions: [{ icon: 'cancel', color: 'white' }],
+  })
+}
+const triggerPpsitive = () => {
+  $q.notify({
+    type: 'positive',
+    message: statusMessage.value,
+    actions: [{ icon: 'cancel', color: 'white' }],
+  })
+}
 </script>
 
 <style lang="scss" scoped>

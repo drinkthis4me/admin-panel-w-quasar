@@ -28,20 +28,8 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import type { MenuLink } from 'src/types/menulink'
 
-interface MenuLink {
-  title: string
-  icon: string
-  children: ChildInMenuLink[]
-}
-interface ChildInMenuLink {
-  title: string
-  children: Link[]
-}
-interface Link {
-  title: string
-  link: string
-}
 defineProps<{
   menuLinks: MenuLink
 }>()

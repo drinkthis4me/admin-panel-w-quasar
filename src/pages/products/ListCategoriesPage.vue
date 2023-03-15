@@ -10,9 +10,13 @@
       </q-breadcrumbs>
     </div>
     <hr />
-    <div class="row q-pa-sm" style="max-width: 900px">
+    <div class="row q-pa-sm full-width" style="max-width: 900px">
       <div class="full-width">
-        <TableForData :title="'類別'" :rows="dataStore.reducedCategories" :columns="columns" />
+        <TableForData
+          :title="'類別'"
+          :rows="mysqlStore.reducedCategories"
+          :columns="columns"
+           />
       </div>
     </div>
   </q-page>
@@ -21,10 +25,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { QTableProps } from 'quasar'
-import { useDataStore } from 'src/stores/useDataStore'
+import { useMysqlStore } from 'src/stores/useMysqlStore';
 import TableForData from 'components/TableForData.vue'
 
-const dataStore = useDataStore()
+const mysqlStore =useMysqlStore()
 
 // q-table columns
 const columns = ref<QTableProps['columns']>([
@@ -55,8 +59,7 @@ const columns = ref<QTableProps['columns']>([
     name: 'actions',
     label: '編輯/刪除',
     field: 'actions',
-    align: 'left',
+    align: 'center',
   },
 ])
-
 </script>

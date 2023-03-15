@@ -59,8 +59,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import DrawerItemProducts from 'src/components/DrawerItemProducts.vue'
+import type { MenuLink } from 'src/types/menulink';
 
-const productSettings = ref({
+const productSettings = ref<MenuLink>({
   title: '產品設定',
   icon: 'storefront',
   children: [
