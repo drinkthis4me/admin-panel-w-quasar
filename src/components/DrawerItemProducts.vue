@@ -28,10 +28,10 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import type { MenuLink } from 'src/types/menulink'
+import type { Menu } from 'src/types/menulink'
 
 defineProps<{
-  menuLinks: MenuLink
+  menuLinks: Menu
 }>()
 
 // change active link style by current route path

@@ -7,24 +7,18 @@
         resetAll()
       }
     "
+    :persistent="submitLoading"
     transition-show="scale"
     transition-hide="scale">
     <q-card style="width: 300px">
       <q-card-section class="column" horizontal>
-        <div
-          v-if="'description' in rowProps.someCategory"
-          class="text-h5 text-center bg-secondary q-py-sm">
+        <div class="text-h5 text-center bg-secondary q-py-sm">
           確認刪除子類別?
         </div>
-        <div v-else class="text-h5 text-center bg-secondary q-py-sm">
-          確認刪除類別?
-        </div>
         <div class="q-mx-md q-my-sm alignMe">
-          <div><span> ID </span>{{ someCategory.id }}</div>
-          <div><span> 名稱 </span>{{ someCategory.name }}</div>
-          <div v-if="'description' in rowProps.someCategory">
-            <span>描述</span>{{ someCategory.description }}
-          </div>
+          <div><span> ID </span>{{ subcategory.id }}</div>
+          <div><span> 名稱 </span>{{ subcategory.name }}</div>
+          <div><span>描述</span>{{ subcategory.description }}</div>
         </div>
       </q-card-section>
       <q-separator inset />
@@ -50,19 +44,17 @@
 <script setup lang="ts">
 import { useDialogPluginComponent } from 'quasar'
 import { ref, onUnmounted } from 'vue'
-import { useMysqlStore } from 'src/stores/useMysqlStore'
-import { useDataStore } from 'src/stores/useDataStore'
+import { useSubcategoriesStore } from 'src/stores/subcategories'
 import { useQuasar } from 'quasar'
+import type { Subcategory } from 'src/types/subcategory'
+
 const rowProps = defineProps<{
-  someCategory: any
+  subcategory: Subcategory
 }>()
-
 defineEmits([...useDialogPluginComponent.emits])
-
 const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } =
   useDialogPluginComponent()
-const mysqlStore = useMysqlStore()
-const dataStore = useDataStore()
+const subStore = useSubcategoriesStore()
 const $q = useQuasar()
 // q-btn
 const statusMessage = ref('')
@@ -74,35 +66,21 @@ const onDeleteSubmitClick = async () => {
   // disable btn
   submitLoading.value = true
   submitDisabled.value = true
+
   try {
-    if (!rowProps.someCategory.id) throw new Error('no id found')
-
+    if (!rowProps.subcategory.id) throw new Error('no id found')
     // call api
-    if ('description' in rowProps.someCategory) {
-      await mysqlStore.deleteSub(rowProps.someCategory.id)
-    } else {
-      await mysqlStore.deleteCate(rowProps.someCategory.id)
-    }
-
-    // error
-    submitLoading.value = false
-    if (mysqlStore.errorStatus) throw new Error('client error')
-    if (!mysqlStore.CUDStatus || mysqlStore.CUDStatus.affectedRows <= 0)
-      throw new Error('server error')
-
+    await subStore.deleteCurrent()
     // update pinia state
-    if ('description' in rowProps.someCategory) {
-      dataStore.deleteSubategory(rowProps.someCategory.id)
-    } else {
-      dataStore.deleteCategory(rowProps.someCategory.id)
-    }
-
-    // show notify
+    subStore.deleteCurrentLocal()
+    // show notification
+    submitLoading.value =false
     statusMessage.value = '刪除成功!'
     triggerPpsitive()
   } catch (error) {
     console.log(error)
-    statusMessage.value = mysqlStore.errorStatus || '伺服器錯誤'
+    // show error
+    statusMessage.value = subStore.errorMessage || '出了些問題'
     triggerNegative()
   } finally {
     autoClose()
@@ -120,7 +98,7 @@ const resetAll = () => {
   submitLoading.value = false
   submitDisabled.value = false
   clearInterval(timeoutID.value)
-  mysqlStore.clearStatus()
+  subStore.clearStatus()
 }
 onUnmounted(() => {
   resetAll()

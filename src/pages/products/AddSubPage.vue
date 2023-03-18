@@ -18,11 +18,12 @@
         <div class="q-gutter-y-md">
           <q-select
             v-model="categoryId"
-            :options="mysqlStore.optionsOfCategories"
+            :options="cStore.optionsForSelct"
             map-options
             label="選擇類別"
             outlined
-            class="full-width" />
+            class="full-width"
+            />
           <q-input
             v-model.trim="userInput.name"
             type="text"
@@ -52,15 +53,15 @@
   </q-page>
 </template>
 <script setup lang="ts">
-import { ref, reactive, onUnmounted } from 'vue'
-import { useMysqlStore } from 'stores/useMysqlStore'
-import { useDataStore } from 'src/stores/useDataStore'
+import { ref, reactive, onUnmounted, watch } from 'vue'
+import { useCategoriesStore } from 'src/stores/categories'
+import { useSubcategoriesStore } from 'src/stores/subcategories'
 import { useQuasar } from 'quasar'
 import FormCreateNew from 'src/components/FormCreateNew.vue'
 import DialogResultMsg from 'src/components/DialogResultMsg.vue'
 
-const mysqlStore = useMysqlStore()
-const dataStore = useDataStore()
+const cStore = useCategoriesStore()
+const subStore = useSubcategoriesStore()
 const $q = useQuasar()
 
 // form
@@ -75,48 +76,41 @@ const userInput = reactive({
 })
 const isLoading = ref(false)
 // dialog
-const dialogInfo = ref({ title: '', body: '' })
+const dialogInfo = ref({ status: '', title: '', body: '' })
 
 const onSubmitClick = async () => {
   isLoading.value = true
   try {
     if (!categoryId.value) throw new Error('no category id')
-
     // call api
-    const newSubWithoutId = {
+    const newSubToSend = {
       name: userInput.name,
       description: userInput.description,
       category_id: categoryId.value.value,
     }
-    await mysqlStore.createSub(newSubWithoutId)
-
+    await subStore.createNew(newSubToSend)
     // error
     isLoading.value = false
-    if (mysqlStore.errorStatus) throw new Error('client error')
-    if (
-      !mysqlStore.CUDStatus ||
-      mysqlStore.CUDStatus.affectedRows < 1 ||
-      !mysqlStore.CUDStatus.insertId
-    )
-      throw new Error('server error')
-
     // update pinia state
-    // grab the new sub id from api response(CUDStatus)
+    // grab the new sub id from api response(serverResposeStatus)
+    const insertId = subStore.serverResposeStatus?.insertId
+    if (!insertId) throw new Error('server error')
     const newSubcategory = {
       name: userInput.name,
       description: userInput.description,
       category_id: categoryId.value.value,
-      id: mysqlStore.CUDStatus.insertId,
+      id: insertId,
     }
-    dataStore.createSubcategory(newSubcategory)
-
+    subStore.createNewLocal(newSubcategory)
     // show success
+    isLoading.value = false
+    dialogInfo.value.status = 'positive'
     dialogInfo.value.title = '新增成功'
     dialogInfo.value.body = '自動關閉彈出視窗...'
-    return
   } catch (error) {
     console.log(error)
-    dialogInfo.value.title = mysqlStore.errorStatus || '伺服器錯誤'
+    dialogInfo.value.status = 'negative'
+    dialogInfo.value.title = subStore.errorMessage || '伺服器錯誤'
     dialogInfo.value.body = '新增失敗，請稍後再試一次。'
   } finally {
     openDialog()
@@ -129,7 +123,7 @@ const resetAll = () => {
   categoryId.value = undefined
   userInput.name = ''
   userInput.description = ''
-  mysqlStore.clearStatus()
+  subStore.clearStatus()
 }
 
 const openDialog = () => {
@@ -146,4 +140,14 @@ const openDialog = () => {
 onUnmounted(() => {
   resetAll()
 })
+
+watch(
+  () => cStore.categories,
+  async () => {
+    if (!cStore.optionsForSelct.length) {
+      await cStore.getAll()
+    }
+  },
+  { immediate: true }
+)
 </script>

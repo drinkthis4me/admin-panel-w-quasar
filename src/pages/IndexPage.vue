@@ -1,6 +1,6 @@
 <template>
-  <q-page class="column items-center">
-    <h1>產品管理平台</h1>
+  <q-page class="column items-center justify-center q-gutter-md">
+    <div :class="[$q.screen.lt.md ? 'text-h2' : 'text-h1']">產品管理平台</div>
     <div>常用功能：</div>
     <div class="q-gutter-sm">
       <q-btn
@@ -18,13 +18,4 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
-import { useMysqlStore } from 'src/stores/useMysqlStore'
-
-const mysqlStore = useMysqlStore()
-
-onMounted(async () => {
-  if (!mysqlStore.categories) await mysqlStore.listAll()
-  if (!mysqlStore.subcategories) await mysqlStore.listAllSub()
-})
 </script>

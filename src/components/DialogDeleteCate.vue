@@ -12,14 +12,13 @@
     transition-hide="scale">
     <q-card style="width: 300px">
       <q-card-section class="column" horizontal>
-        <div class="text-h5 text-center bg-secondary q-py-sm">編輯類別</div>
-        <q-input
-          v-model="inputName"
-          :disable="inputDisalbled"
-          label="類別名稱"
-          outlined
-          color="teal-4"
-          class="q-ma-sm"></q-input>
+        <div class="text-h5 text-center bg-secondary q-py-sm">
+          確認刪除類別?
+        </div>
+        <div class="q-mx-md q-my-sm alignMe">
+          <div><span> ID </span>{{ category.id }}</div>
+          <div><span> 名稱 </span>{{ category.name }}</div>
+        </div>
       </q-card-section>
       <q-separator inset />
       <q-card-actions align="center">
@@ -31,106 +30,78 @@
           v-close-popup
           @click="onDialogCancel" />
         <q-btn
-          type="submit"
-          label="確定"
-          color="primary"
+          label="刪除"
+          color="negative"
           class="btn-width"
-          :disable="submitDisabled"
           :loading="submitLoading"
-          @click="onEditSubmitClick" />
+          :disable="submitDisabled"
+          @click="onDeleteSubmitClick" />
       </q-card-actions>
     </q-card>
   </q-dialog>
 </template>
 <script setup lang="ts">
 import { useDialogPluginComponent } from 'quasar'
-import { ref, watch, watchEffect, onUnmounted } from 'vue'
+import { ref, onUnmounted } from 'vue'
 import { useCategoriesStore } from 'src/stores/categories'
 import { useQuasar } from 'quasar'
 import type { Category } from 'src/types/category'
-const props = defineProps<{
+
+const rowProps = defineProps<{
   category: Category
 }>()
 defineEmits([...useDialogPluginComponent.emits])
-
 const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } =
   useDialogPluginComponent()
 const cStore = useCategoriesStore()
 const $q = useQuasar()
-// inputs
-const statusMessage = ref('')
-const inputName = ref(props.category.name)
 // q-btn
-const inputDisalbled = ref(false)
-const submitDisabled = ref(true)
+const statusMessage = ref('')
 const submitLoading = ref(false)
+const submitDisabled = ref(false)
 const timeoutID = ref<NodeJS.Timeout>()
 
-// Disable submit button if input unchanged
-watch(
-  () => inputName.value,
-  () => {
-    if (inputName.value === props.category.name) {
-      submitDisabled.value = true
-    } else {
-      submitDisabled.value = false
-    }
-  },
-  { immediate: true }
-)
-// reset q-inputs
-watchEffect(() => {
-  inputName.value = props.category.name
-})
-const onEditSubmitClick = async () => {
-  // disable
-  inputDisalbled.value = true
-  submitDisabled.value = true
+const onDeleteSubmitClick = async () => {
+  // disable btn
   submitLoading.value = true
+  submitDisabled.value = true
+
   try {
-    if (!props.category.id || !inputName.value)
-      throw new Error('no input found')
-    const newCategory = { id: props.category.id, name: inputName.value }
+    if (!rowProps.category.id) throw new Error('no id found')
     // call api
-    await cStore.updateCurrent(newCategory)
+    await cStore.deleteCurrent()
     // update pinia state
-    cStore.updateCurrentLocal(newCategory)
+    cStore.deleteCurrentLocal()
     // show notification
     submitLoading.value = false
-    statusMessage.value = '更新成功!'
+    statusMessage.value = '刪除成功!'
     triggerPpsitive()
   } catch (error) {
     console.log(error)
     // show error
-    statusMessage.value = cStore.errorMessage || '伺服器錯誤'
+    statusMessage.value = cStore.errorMessage || '出了些問題'
     triggerNegative()
   } finally {
     autoClose()
     return
   }
 }
-
 const autoClose = () => {
   timeoutID.value = setTimeout(() => {
     resetAll()
     onDialogOK()
   }, 200)
 }
-
 const resetAll = () => {
-  inputName.value = props.category.name
   statusMessage.value = ''
-  inputDisalbled.value = false
   submitLoading.value = false
   submitDisabled.value = false
-  clearTimeout(timeoutID.value)
+  clearInterval(timeoutID.value)
   cStore.clearStatus()
 }
-
 onUnmounted(() => {
   resetAll()
 })
-
 const triggerNegative = () => {
   $q.notify({
     type: 'negative',
@@ -146,8 +117,20 @@ const triggerPpsitive = () => {
   })
 }
 </script>
-
 <style lang="scss" scoped>
+.alignMe span {
+  display: inline-flex;
+  width: 20%;
+  position: relative;
+  padding-right: 10px;
+
+  &::after {
+    content: ':';
+    position: absolute;
+    right: 10px;
+  }
+}
+
 .btn-width {
   width: 48%;
 }

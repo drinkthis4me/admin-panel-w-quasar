@@ -38,14 +38,12 @@
 </template>
 <script setup lang="ts">
 import { ref, onUnmounted } from 'vue'
-import { useMysqlStore } from 'stores/useMysqlStore'
-import { useDataStore } from 'src/stores/useDataStore'
+import { useCategoriesStore } from 'src/stores/categories'
 import { useQuasar } from 'quasar'
 import FormCreateNew from 'components/FormCreateNew.vue'
 import DialogResultMsg from 'src/components/DialogResultMsg.vue'
 
-const mysqlStore = useMysqlStore()
-const dataStore = useDataStore()
+const cStore = useCategoriesStore()
 const $q = useQuasar()
 
 // form
@@ -58,32 +56,23 @@ const onSubmitClick = async () => {
   isLoading.value = true
   try {
     if (!inputName.value) throw new Error('no input found')
-
     // call api
-    await mysqlStore.createCate(inputName.value)
-
-    // error
-    isLoading.value = false
-    if (mysqlStore.errorStatus) throw new Error('user error')
-    if (
-      !mysqlStore.CUDStatus ||
-      mysqlStore.CUDStatus.affectedRows < 1 ||
-      !mysqlStore.CUDStatus.insertId
-    )
-      throw new Error('server error')
-
+    await cStore.createNew(inputName.value)
     //update pinia state
-    dataStore.createCategory(inputName.value, mysqlStore.CUDStatus.insertId)
-
+    // grab the new id from api response(serverResposeStatus)
+    const insertId = cStore.serverResposeStatus?.insertId
+    if (!insertId) throw new Error('server error')
+    const newC = { name: inputName.value, id: insertId }
+    cStore.createNewLocal(newC)
     // show success
+    isLoading.value = false
     dialogInfo.value.status = 'positive'
     dialogInfo.value.title = '新增成功'
     dialogInfo.value.body = '自動關閉彈出視窗...'
-    // dialogOpen.value = true
   } catch (error) {
     console.log(error)
     dialogInfo.value.status = 'negative'
-    dialogInfo.value.title = mysqlStore.errorStatus || '伺服器錯誤'
+    dialogInfo.value.title = cStore.errorMessage || '伺服器錯誤'
     dialogInfo.value.body = '新增失敗，請稍後再試一次。'
   } finally {
     openDialog()
@@ -94,7 +83,7 @@ const onSubmitClick = async () => {
 const resetAll = () => {
   isLoading.value = false
   inputName.value = ''
-  mysqlStore.clearStatus()
+  cStore.clearStatus()
 }
 
 const openDialog = () => {

@@ -10,25 +10,26 @@
       </q-breadcrumbs>
     </div>
     <hr />
-    <div class="row q-pa-sm full-width" style="max-width: 900px">
+    <div class="row q-pa-sm full-width" style="max-width: 600px">
       <div class="full-width">
         <TableForData
           :title="'類別'"
-          :rows="mysqlStore.reducedCategories"
-          :columns="columns"
-           />
+          :rows="cStore.rowsForTable"
+          :columns="columns" />
       </div>
     </div>
   </q-page>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { QTableProps } from 'quasar'
-import { useMysqlStore } from 'src/stores/useMysqlStore';
+import { useCategoriesStore } from 'src/stores/categories'
+import { useSubcategoriesStore } from 'src/stores/subcategories'
 import TableForData from 'components/TableForData.vue'
 
-const mysqlStore =useMysqlStore()
+const cStore = useCategoriesStore()
+const subStore = useSubcategoriesStore()
 
 // q-table columns
 const columns = ref<QTableProps['columns']>([
@@ -43,10 +44,11 @@ const columns = ref<QTableProps['columns']>([
   },
   {
     name: 'name',
-    align: 'left',
+    align: 'center',
     label: '名稱',
     field: 'name',
     sortable: true,
+    style: 'width:300px',
   },
   {
     name: 'subcategoriesCount',
@@ -62,4 +64,17 @@ const columns = ref<QTableProps['columns']>([
     align: 'center',
   },
 ])
+
+watch(
+  [() => cStore.categories, () => subStore.subcategories],
+  async () => {
+    if (!cStore.categories.length) {
+      await cStore.getAll()
+    }
+    if (!subStore.subcategories.length) {
+      await subStore.getAll()
+    }
+  },
+  { immediate: true }
+)
 </script>

@@ -3,11 +3,11 @@
     :title="title"
     :rows="rows"
     :columns="columns"
+    :visible-columns="visibleColumns"
     row-key="id"
     class="my-sticky-header-table"
     table-header-class="bg-secondary"
-   
-    no-data-label="查無資料。"
+    no-data-label="查無資料 / 無選擇資料。"
     no-results-label="找不到符合搜尋的資料，試試以其他關鍵字搜尋。"
     rows-per-page-label="顯示行數"
     :rows-per-page-options="[10, 15, 20, 25, 50, 0]"
@@ -15,17 +15,17 @@
     :loading="isLoading">
     <!-- action slot -->
     <template #body-cell-actions="props">
-      <q-td class="row no-wrap justify-center q-gutter-x-sm">
+      <q-td class=" no-wrap justify-center q-gutter-x-sm">
         <q-btn
           color="primary"
           icon="edit"
-          :size="$q.screen.lt.sm? 'sm' : 'xs'"
+          :size="$q.screen.lt.sm ? 'sm' : 'md'"
           @click="onEditClick(props.row)" />
         <q-btn
           color="negative"
           icon="delete"
-          @click="onDeleteClick(props.row)"
-          size="sm" />
+          :size="$q.screen.lt.sm ? 'sm' : 'md'"
+          @click="onDeleteClick(props.row)" />
       </q-td>
     </template>
     <!-- /acton slot -->
@@ -40,15 +40,16 @@
     <!-- /search slot -->
     <!-- title + full screen slot -->
     <template #top-left="props">
-      <div class="items-center">
+      <div class="row inline items-center">
         <span class="text-h4">{{ title }}</span>
         <q-btn
           flat
           round
           dense
+          size="lg"
           :icon="props.inFullscreen ? 'fullscreen_exit' : 'fullscreen'"
           @click="props.toggleFullscreen"
-          class="q-ml-md" />
+          class="q-ml-sm" />
       </div>
     </template>
     <!-- /title + full screen slot -->
@@ -66,41 +67,55 @@
 import { ref, computed } from 'vue'
 import { QTableProps, useQuasar } from 'quasar'
 import DialogEditCate from './DialogEditCate.vue'
-import DialogDelete from './DialogDelete.vue'
 import DialogEditSub from './DialogEditSub.vue'
+import DialogDeleteCate from './DialogDeleteCate.vue'
+import DialogDeleteSub from './DialogDeleteSub.vue'
+import { useCategoriesStore } from 'src/stores/categories'
+import { useSubcategoriesStore } from 'src/stores/subcategories'
 
+const cStore = useCategoriesStore()
+const subStore = useSubcategoriesStore()
 const $q = useQuasar()
 
-// variables naming conflict: componentProps for TableForData; props for q-table
-const componentProps = defineProps<{
+// variables naming conflict:
+// tableProps for TableForData; props for q-table slot
+const tableProps = defineProps<{
   rows: QTableProps['rows']
   columns: QTableProps['columns']
-  filterId?: number
   title: string
+  visibleColumns?: string[]
 }>()
 
 const isLoading = computed(() => {
-  return componentProps.rows == null || componentProps.rows.length < 0
+  return !tableProps.rows || tableProps.rows.length < 0
 })
 
 // bind searching with table data
 const searchFilter = ref('')
 
-// logic for actions(edit/delete)
+// on actions(edit/delete)
 const currentRow = ref<any>()
 const onEditClick = (row: any) => {
   currentRow.value = row
   if (row && row.description) {
     openDialogEditSub()
+    subStore.currentSubID = row.id
   } else if (row) {
-    openDialogEdit()
+    openDialogEditCate()
+    cStore.currentID = row.id
   }
 }
 const onDeleteClick = (row: any) => {
   currentRow.value = row
-  openDialogDelete()
+  if (row && row.description) {
+    openDialogDeleteSub()
+    subStore.currentSubID = row.id
+  } else if (row) {
+    openDialogDeleteCate()
+    cStore.currentID = row.id
+  }
 }
-const openDialogEdit = () => {
+const openDialogEditCate = () => {
   $q.dialog({
     component: DialogEditCate,
     componentProps: {
@@ -116,39 +131,47 @@ const openDialogEditSub = () => {
     },
   })
 }
-const openDialogDelete = () => {
+const openDialogDeleteCate = () => {
   $q.dialog({
-    component: DialogDelete,
+    component: DialogDeleteCate,
     componentProps: {
-      someCategory: currentRow.value,
+      category: currentRow.value,
+    },
+  })
+}
+const openDialogDeleteSub = () => {
+  $q.dialog({
+    component: DialogDeleteSub,
+    componentProps: {
+      subcategory: currentRow.value,
     },
   })
 }
 </script>
 
 <style lang="scss" scoped>
-.my-sticky-header-table {
-  // height: 600px;
+// .my-sticky-header-table {
+//   // height: 600px;
 
-  .q-table__top,
-  .q-table__bottom,
-  thead tr:first-child th {
-    /* bg color for th */
-    background-color: $secondary;
-  }
+//   .q-table__top,
+//   .q-table__bottom,
+//   thead tr:first-child th {
+//     /* bg color for th */
+//     background-color: $secondary;
+//   }
 
-  thead tr th {
-    position: sticky;
-    z-index: 1;
-  }
-  thead tr:first-child th {
-    top: 0;
-  }
+//   thead tr th {
+//     position: sticky;
+//     z-index: 1;
+//   }
+//   thead tr:first-child th {
+//     top: 0;
+//   }
 
-  /* this is when the loading indicator appears */
-  &.q-table--loading thead tr:last-child th {
-    /* height of all previous header rows */
-    top: 48px;
-  }
-}
+//   /* this is when the loading indicator appears */
+//   &.q-table--loading thead tr:last-child th {
+//     /* height of all previous header rows */
+//     top: 48px;
+//   }
+// }
 </style>

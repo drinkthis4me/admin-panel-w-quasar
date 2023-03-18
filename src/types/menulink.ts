@@ -1,9 +1,9 @@
-export interface MenuLink {
+export interface Menu {
   title: string
   icon: string
-  children: ChildInMenuLink[]
+  children: SubMenu[]
 }
-interface ChildInMenuLink {
+interface SubMenu {
   title: string
   children: Link[]
 }

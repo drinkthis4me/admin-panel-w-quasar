@@ -7,6 +7,7 @@
         resetAll()
       }
     "
+    :persistent="submitLoading"
     transition-show="scale"
     transition-hide="scale">
     <q-card style="width: 300px">
@@ -50,9 +51,8 @@
 </template>
 <script setup lang="ts">
 import { useDialogPluginComponent } from 'quasar'
-import { ref, reactive, watch, onUnmounted } from 'vue'
-import { useMysqlStore } from 'src/stores/useMysqlStore'
-import { useDataStore } from 'src/stores/useDataStore'
+import { ref, reactive, watch, watchEffect, onUnmounted } from 'vue'
+import { useSubcategoriesStore } from 'src/stores/subcategories'
 import { useQuasar } from 'quasar'
 import type { Subcategory } from 'src/types/subcategory'
 
@@ -62,8 +62,7 @@ const props = defineProps<{
 defineEmits([...useDialogPluginComponent.emits])
 const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } =
   useDialogPluginComponent()
-const mysqlStore = useMysqlStore()
-const dataStore = useDataStore()
+const subStore = useSubcategoriesStore()
 const $q = useQuasar()
 // inputs
 const statusMessage = ref('')
@@ -101,19 +100,15 @@ watch(
   { immediate: true }
 )
 // reset q-inputs
-watch(
-  () => props.subcategory.name,
-  () => {
-    userInput.name = props.subcategory.name
-    userInput.description = props.subcategory.description
-  }
-)
+watchEffect(() => {
+  userInput.name = props.subcategory.name
+  userInput.description = props.subcategory.description
+})
 const onEditSubmitClick = async () => {
   // disable
   inputDisalbled.value = true
   submitDisabled.value = true
   submitLoading.value = true
-
   try {
     if (
       !userInput.name ||
@@ -129,25 +124,18 @@ const onEditSubmitClick = async () => {
       description: userInput.description,
       category_id: props.subcategory.category_id,
     }
-
     // call api
-    await mysqlStore.updateSub(newSubcategory)
-
-    // error
-    submitLoading.value = false
-    if (mysqlStore.errorStatus) throw new Error('client error')
-    if (!mysqlStore.CUDStatus || mysqlStore.CUDStatus.affectedRows <= 0)
-      throw new Error('server error')
-
+    await subStore.updateCurrent(newSubcategory)
     // update pinia state
-    dataStore.updateSubcategories(newSubcategory)
-
-    // show notify
+    subStore.updateCurrentLocal(newSubcategory)
+    // show notification
+    submitLoading.value = false
     statusMessage.value = '更新成功!'
     triggerPpsitive()
   } catch (error) {
     console.log(error)
-    statusMessage.value = mysqlStore.errorStatus
+    //show error
+    statusMessage.value = subStore.errorMessage
     triggerNegative()
   } finally {
     autoClose()
@@ -169,7 +157,7 @@ const resetAll = () => {
   submitLoading.value = false
   submitDisabled.value = false
   clearTimeout(timeoutID.value)
-  mysqlStore.clearStatus()
+  subStore.clearStatus()
 }
 onUnmounted(() => {
   resetAll()

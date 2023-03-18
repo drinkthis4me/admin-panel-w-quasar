@@ -13,12 +13,9 @@
     <div class="q-pa-sm row full-width" style="max-width: 500px">
       <q-select
         v-model="selectedCategory"
-        :options="mysqlStore.optionsOfCategories"
-        use-chips
-        multiple
+        :options="cStore.optionsForSelct"
         emit-value
         map-options
-        clearable
         label="選擇類別"
         outlined
         transition-show="scale"
@@ -26,18 +23,24 @@
         class="full-width" />
     </div>
     <div class="q-pa-sm full-width" style="max-width: 800px">
-      <TableForData :title="'子類別'" :rows="filteredRows" :columns="columns" />
+      <TableForData
+        :title="'子類別'"
+        :rows="selectedCategory ? filteredRows : defaultRow"
+        :columns="columns"
+        :visible-columns="visibleColumns" />
     </div>
   </q-page>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watchEffect } from 'vue'
 import { QTableProps } from 'quasar'
-import { useMysqlStore } from 'src/stores/useMysqlStore'
+import { useCategoriesStore } from 'src/stores/categories'
+import { useSubcategoriesStore } from 'src/stores/subcategories'
 import TableForData from 'components/TableForData.vue'
 
-const mysqlStore = useMysqlStore()
+const cStore = useCategoriesStore()
+const subStore = useSubcategoriesStore()
 
 // table columns
 const columns = ref<QTableProps['columns']>([
@@ -47,7 +50,7 @@ const columns = ref<QTableProps['columns']>([
     label: 'ID',
     align: 'left',
     field: row => row.id,
-    format: val => `${val}`,
+    format: val => (val === 0 ? '' : `${val}`),
     sortable: true,
   },
   {
@@ -70,7 +73,7 @@ const columns = ref<QTableProps['columns']>([
     label: '分類',
     field: 'category_id',
     format: val =>
-      `${mysqlStore.optionsOfCategories.find(o => o.value == val)?.label}`,
+      `${cStore.optionsForSelct?.find(o => o.value == val)?.label}`,
     align: 'center',
     sortable: true,
   },
@@ -81,23 +84,43 @@ const columns = ref<QTableProps['columns']>([
     align: 'center',
   },
 ])
-
+// table rows
+const filteredRows = computed(() => {
+  if (selectedCategory.value) {
+    return subStore.subcategories.filter(
+      sub => sub.category_id === selectedCategory.value
+    )
+  } else {
+    return []
+  }
+})
+// default content for table:
+// set defaultRow and pass visibleColumns props to table
+const defaultRow = [
+  {
+    id: 0,
+    name: '請選擇一個子類別',
+    description: '',
+    subcategory_id: 0,
+  },
+]
+const visibleColumns = computed(() => {
+  if (selectedCategory.value) {
+    return ['id', 'name', 'description', 'category_id', 'actions']
+  } else return ['name']
+})
 // v-model for q-select
 const selectedCategory = ref()
 
-// table rows. changes with q-select
-const filteredRows = computed<QTableProps['rows']>(() => {
-  // selected: filtered
-  if (selectedCategory.value) {
-    const selectedIds = Object.values(selectedCategory.value)
-    if (selectedIds.length > 0) {
-      return mysqlStore.subcategories?.filter(row =>
-        selectedIds.includes(row.category_id)
-      )
-    } else return mysqlStore.subcategories
+// fetch content if empty
+watchEffect(async () => {
+  if (!cStore.optionsForSelct.length) {
+    await cStore.getAll()
   }
-
-  // default: all
-  return mysqlStore.subcategories
+})
+watchEffect(async () => {
+  if (!subStore.subcategories.length) {
+    await subStore.getAll()
+  }
 })
 </script>
