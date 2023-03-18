@@ -9,47 +9,51 @@
         <q-breadcrumbs-el label="新增子類別" />
       </q-breadcrumbs>
     </div>
-    <!-- form -->
-    <FormCreateNew>
-      <template #title>
-        <div class="text-h5 text-center">新增子類別</div>
-      </template>
-      <template #input>
-        <div class="q-gutter-y-md">
-          <q-select
-            v-model="categoryId"
-            :options="cStore.optionsForSelct"
-            map-options
-            label="選擇類別"
-            outlined
-            class="full-width"
-            />
-          <q-input
-            v-model.trim="userInput.name"
-            type="text"
-            label="名稱"
-            outlined
-            :disable="isLoading" />
-          <q-input
-            v-model.trim="userInput.description"
-            type="text"
-            label="子類別描述"
-            outlined
-            :disable="isLoading" />
-        </div>
-      </template>
-      <template #submit>
-        <q-btn
-          label="送出"
-          type="submit"
-          color="primary"
-          class="full-width q-mt-md"
-          :loading="isLoading"
-          :disable="!categoryId || !userInput.name || !userInput.description"
-          @click.prevent="onSubmitClick" />
-      </template>
-    </FormCreateNew>
-    <!-- /form -->
+    <div
+      v-if="cStore.categories.length"
+      class="q-mt-md row justify-center full-width">
+      <!-- form -->
+      <FormCreateNew>
+        <template #title>
+          <div class="text-h5 text-center">新增子類別</div>
+        </template>
+        <template #input>
+          <div class="q-gutter-y-md">
+            <q-select
+              v-model="categoryId"
+              :options="cStore.optionsForSelct"
+              map-options
+              label="選擇類別"
+              outlined
+              class="full-width" />
+            <q-input
+              v-model.trim="userInput.name"
+              type="text"
+              label="名稱"
+              outlined
+              :disable="isLoading" />
+            <q-input
+              v-model.trim="userInput.description"
+              type="text"
+              label="子類別描述"
+              outlined
+              :disable="isLoading" />
+          </div>
+        </template>
+        <template #submit>
+          <q-btn
+            label="送出"
+            type="submit"
+            color="primary"
+            class="full-width q-mt-md"
+            :loading="isLoading"
+            :disable="!categoryId || !userInput.name || !userInput.description"
+            @click.prevent="onSubmitClick" />
+        </template>
+      </FormCreateNew>
+      <!-- /form -->
+    </div>
+    <div v-else><ServerErrorMessage /></div>
   </q-page>
 </template>
 <script setup lang="ts">
@@ -59,6 +63,7 @@ import { useSubcategoriesStore } from 'src/stores/subcategories'
 import { useQuasar } from 'quasar'
 import FormCreateNew from 'src/components/FormCreateNew.vue'
 import DialogResultMsg from 'src/components/DialogResultMsg.vue'
+import ServerErrorMessage from 'src/components/ServerErrorMessage.vue'
 
 const cStore = useCategoriesStore()
 const subStore = useSubcategoriesStore()

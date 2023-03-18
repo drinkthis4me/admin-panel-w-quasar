@@ -3,12 +3,11 @@
     :title="title"
     :rows="rows"
     :columns="columns"
-    :visible-columns="visibleColumns"
     row-key="id"
     class="my-sticky-header-table"
     table-header-class="bg-secondary"
-    no-data-label="查無資料 / 無選擇資料。"
-    no-results-label="找不到符合搜尋的資料，試試以其他關鍵字搜尋。"
+    no-data-label="查無資料"
+    no-results-label="找不到符合搜尋的資料，試試以其他關鍵字搜尋"
     rows-per-page-label="顯示行數"
     :rows-per-page-options="[10, 15, 20, 25, 50, 0]"
     :filter="searchFilter"
@@ -31,7 +30,7 @@
     <!-- /acton slot -->
     <!-- search slot -->
     <template #top-right>
-      <q-input v-model="searchFilter" type="text" placeholder="尋找">
+      <q-input v-model="searchFilter" type="text" placeholder="尋找" :disable="!rows?.length">
         <template #append>
           <q-icon name="search" />
         </template>
@@ -83,7 +82,6 @@ const tableProps = defineProps<{
   rows: QTableProps['rows']
   columns: QTableProps['columns']
   title: string
-  visibleColumns?: string[]
 }>()
 
 const isLoading = computed(() => {

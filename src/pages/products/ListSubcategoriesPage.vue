@@ -9,26 +9,32 @@
         <q-breadcrumbs-el label="子類別" />
       </q-breadcrumbs>
     </div>
-
-    <div class="q-pa-sm row full-width" style="max-width: 500px">
-      <q-select
-        v-model="selectedCategory"
-        :options="cStore.optionsForSelct"
-        emit-value
-        map-options
-        label="選擇類別"
-        outlined
-        transition-show="scale"
-        transition-hide="scale"
-        class="full-width" />
+    <div
+      v-if="cStore.optionsForSelct.length"
+      class="column items-center full-width">
+      <div class="q-pa-sm full-width" style="max-width: 500px">
+        <q-select
+          v-model="selectedCategory"
+          :options="cStore.optionsForSelct"
+          emit-value
+          map-options
+          label="選擇類別"
+          outlined
+          transition-show="scale"
+          transition-hide="scale" />
+      </div>
+      <div
+        v-if="selectedCategory"
+        class="q-pa-sm full-width"
+        style="max-width: 800px">
+        <TableForData
+          :title="'子類別'"
+          :rows="filteredRows"
+          :columns="columns" />
+      </div>
+      <div v-else class="q-pa-sm q-mt-md text-h5">⬆ 選擇類別</div>
     </div>
-    <div class="q-pa-sm full-width" style="max-width: 800px">
-      <TableForData
-        :title="'子類別'"
-        :rows="selectedCategory ? filteredRows : defaultRow"
-        :columns="columns"
-        :visible-columns="visibleColumns" />
-    </div>
+    <div v-else><ServerErrorMessage /></div>
   </q-page>
 </template>
 
@@ -38,6 +44,7 @@ import { QTableProps } from 'quasar'
 import { useCategoriesStore } from 'src/stores/categories'
 import { useSubcategoriesStore } from 'src/stores/subcategories'
 import TableForData from 'components/TableForData.vue'
+import ServerErrorMessage from 'src/components/ServerErrorMessage.vue'
 
 const cStore = useCategoriesStore()
 const subStore = useSubcategoriesStore()
@@ -93,21 +100,6 @@ const filteredRows = computed(() => {
   } else {
     return []
   }
-})
-// default content for table:
-// set defaultRow and pass visibleColumns props to table
-const defaultRow = [
-  {
-    id: 0,
-    name: '請選擇一個子類別',
-    description: '',
-    subcategory_id: 0,
-  },
-]
-const visibleColumns = computed(() => {
-  if (selectedCategory.value) {
-    return ['id', 'name', 'description', 'category_id', 'actions']
-  } else return ['name']
 })
 // v-model for q-select
 const selectedCategory = ref()

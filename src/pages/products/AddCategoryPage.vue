@@ -9,31 +9,34 @@
         <q-breadcrumbs-el label="新增類別" />
       </q-breadcrumbs>
     </div>
-    <!-- form -->
-    <FormCreateNew>
-      <template #title>
-        <div class="text-h5 text-center">新增類別</div>
-      </template>
-      <template #input>
-        <q-input
-          v-model.trim="inputName"
-          type="text"
-          label="名稱"
-          outlined
-          :disable="isLoading" />
-      </template>
-      <template #submit>
-        <q-btn
-          label="送出"
-          type="submit"
-          color="primary"
-          class="full-width q-mt-md"
-          :loading="isLoading"
-          :disable="!inputName"
-          @click.prevent="onSubmitClick" />
-      </template>
-    </FormCreateNew>
-    <!-- /form -->
+    <div v-if="cStore.categories.length" class="q-mt-md row justify-center full-width">
+      <!-- form -->
+      <FormCreateNew>
+        <template #title>
+          <div class="text-h5 text-center">新增類別</div>
+        </template>
+        <template #input>
+          <q-input
+            v-model.trim="inputName"
+            type="text"
+            label="名稱"
+            outlined
+            :disable="isLoading" />
+        </template>
+        <template #submit>
+          <q-btn
+            label="送出"
+            type="submit"
+            color="primary"
+            class="full-width q-mt-md"
+            :loading="isLoading"
+            :disable="!inputName"
+            @click.prevent="onSubmitClick" />
+        </template>
+      </FormCreateNew>
+      <!-- /form -->
+    </div>
+    <div v-else><ServerErrorMessage /></div>
   </q-page>
 </template>
 <script setup lang="ts">
@@ -42,6 +45,7 @@ import { useCategoriesStore } from 'src/stores/categories'
 import { useQuasar } from 'quasar'
 import FormCreateNew from 'components/FormCreateNew.vue'
 import DialogResultMsg from 'src/components/DialogResultMsg.vue'
+import ServerErrorMessage from 'src/components/ServerErrorMessage.vue'
 
 const cStore = useCategoriesStore()
 const $q = useQuasar()

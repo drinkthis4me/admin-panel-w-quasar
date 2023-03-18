@@ -10,13 +10,19 @@
       </q-breadcrumbs>
     </div>
     <hr />
-    <div class="row q-pa-sm full-width" style="max-width: 600px">
+    <div
+      v-if="cStore.rowsForTable.length"
+      class="row q-pa-sm full-width"
+      style="max-width: 600px">
       <div class="full-width">
         <TableForData
           :title="'類別'"
           :rows="cStore.rowsForTable"
           :columns="columns" />
       </div>
+    </div>
+    <div v-else>
+      <ServerErrorMessage />
     </div>
   </q-page>
 </template>
@@ -27,6 +33,7 @@ import { QTableProps } from 'quasar'
 import { useCategoriesStore } from 'src/stores/categories'
 import { useSubcategoriesStore } from 'src/stores/subcategories'
 import TableForData from 'components/TableForData.vue'
+import ServerErrorMessage from 'src/components/ServerErrorMessage.vue'
 
 const cStore = useCategoriesStore()
 const subStore = useSubcategoriesStore()

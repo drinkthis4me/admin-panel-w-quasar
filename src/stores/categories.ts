@@ -9,7 +9,7 @@ const API_URL = 'http://localhost:3000/mall'
 
 export const useCategoriesStore = defineStore('categories', () => {
   const categories = ref<Category[]>([])
-  // // dummy data
+  // dummy data
   // const categories = ref<Category[]>([
   //   {
   //     id: 10001,

@@ -8,7 +8,7 @@ const API_URL = 'http://localhost:3000/mall'
 
 export const useSubcategoriesStore = defineStore('subcategories', () => {
   const subcategories = ref<Subcategory[]>([])
-  // // dummy data
+  // dummy data
   // const subcategories = ref<Subcategory[]>([
   //   {
   //     id: 2,
