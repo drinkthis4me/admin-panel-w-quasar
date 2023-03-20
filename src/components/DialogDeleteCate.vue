@@ -44,7 +44,7 @@
 import { useDialogPluginComponent } from 'quasar'
 import { ref, onUnmounted } from 'vue'
 import { useCategoriesStore } from 'src/stores/categories'
-import { useQuasar } from 'quasar'
+import { useNotify } from 'src/composable/notify'
 import type { Category } from 'src/types/category'
 
 const rowProps = defineProps<{
@@ -54,7 +54,7 @@ defineEmits([...useDialogPluginComponent.emits])
 const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } =
   useDialogPluginComponent()
 const cStore = useCategoriesStore()
-const $q = useQuasar()
+const { triggerNotify } = useNotify()
 // q-btn
 const statusMessage = ref('')
 const submitLoading = ref(false)
@@ -72,7 +72,7 @@ const onDeleteSubmitClick = async () => {
     // show notification
     submitLoading.value = false
     statusMessage.value = '刪除成功!'
-    triggerPpsitive()
+    triggerNotify('positive', statusMessage)
   } catch (error) {
     console.log(error)
     if (typeof error === 'string') {
@@ -80,7 +80,7 @@ const onDeleteSubmitClick = async () => {
     } else {
       statusMessage.value = '伺服器錯誤'
     }
-    triggerNegative()
+    triggerNotify('negative', statusMessage)
   } finally {
     autoClose()
   }
@@ -100,20 +100,6 @@ const resetAll = () => {
 onUnmounted(() => {
   resetAll()
 })
-const triggerNegative = () => {
-  $q.notify({
-    type: 'negative',
-    message: statusMessage.value,
-    actions: [{ icon: 'cancel', color: 'white' }],
-  })
-}
-const triggerPpsitive = () => {
-  $q.notify({
-    type: 'positive',
-    message: statusMessage.value,
-    actions: [{ icon: 'cancel', color: 'white' }],
-  })
-}
 </script>
 <style lang="scss" scoped>
 .alignMe span {
