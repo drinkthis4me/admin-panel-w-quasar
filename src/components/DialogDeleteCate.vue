@@ -62,28 +62,27 @@ const submitDisabled = ref(false)
 const timeoutID = ref<NodeJS.Timeout>()
 
 const onDeleteSubmitClick = async () => {
-  // disable btn
+  // disable
   submitLoading.value = true
   submitDisabled.value = true
-
   try {
-    if (!rowProps.category.id) throw new Error('no id found')
+    if (!rowProps.category.id) throw new Error('找不到欲刪除的類別')
     // call api
     await cStore.deleteCurrent()
-    // update pinia state
-    cStore.deleteCurrentLocal()
     // show notification
     submitLoading.value = false
     statusMessage.value = '刪除成功!'
     triggerPpsitive()
   } catch (error) {
     console.log(error)
-    // show error
-    statusMessage.value = cStore.errorMessage || '出了些問題'
+    if (typeof error === 'string') {
+      statusMessage.value = error
+    } else {
+      statusMessage.value = '伺服器錯誤'
+    }
     triggerNegative()
   } finally {
     autoClose()
-    return
   }
 }
 const autoClose = () => {
@@ -97,7 +96,6 @@ const resetAll = () => {
   submitLoading.value = false
   submitDisabled.value = false
   clearInterval(timeoutID.value)
-  cStore.clearStatus()
 }
 onUnmounted(() => {
   resetAll()

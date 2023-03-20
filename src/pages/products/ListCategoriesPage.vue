@@ -11,13 +11,13 @@
     </div>
     <hr />
     <div
-      v-if="cStore.rowsForTable.length"
+      v-if="cStore.categories.length"
       class="row q-pa-sm full-width"
       style="max-width: 600px">
       <div class="full-width">
         <TableForData
           :title="'類別'"
-          :rows="cStore.rowsForTable"
+          :rows="cStore.categories"
           :columns="columns" />
       </div>
     </div>
@@ -31,12 +31,10 @@
 import { ref, watch } from 'vue'
 import { QTableProps } from 'quasar'
 import { useCategoriesStore } from 'src/stores/categories'
-import { useSubcategoriesStore } from 'src/stores/subcategories'
 import TableForData from 'components/TableForData.vue'
 import ServerErrorMessage from 'src/components/ServerErrorMessage.vue'
 
 const cStore = useCategoriesStore()
-const subStore = useSubcategoriesStore()
 
 // q-table columns
 const columns = ref<QTableProps['columns']>([
@@ -60,7 +58,8 @@ const columns = ref<QTableProps['columns']>([
   {
     name: 'subcategoriesCount',
     label: '子類別數量',
-    field: 'subcategoriesCount',
+    field: row => row.subcategories,
+    format: val => `${val.length}`,
     align: 'center',
     sortable: true,
   },
@@ -72,14 +71,12 @@ const columns = ref<QTableProps['columns']>([
   },
 ])
 
+// fetch categories if empty
 watch(
-  [() => cStore.categories, () => subStore.subcategories],
+  () => cStore.categories,
   async () => {
     if (!cStore.categories.length) {
       await cStore.getAll()
-    }
-    if (!subStore.subcategories.length) {
-      await subStore.getAll()
     }
   },
   { immediate: true }

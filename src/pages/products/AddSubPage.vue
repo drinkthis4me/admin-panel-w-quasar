@@ -20,8 +20,11 @@
         <template #input>
           <div class="q-gutter-y-md">
             <q-select
-              v-model="categoryId"
-              :options="cStore.optionsForSelct"
+              v-model="cStore.currentID"
+              :options="cStore.categories"
+              option-label="name"
+              option-value="id"
+              emit-value
               map-options
               label="選擇類別"
               outlined
@@ -47,7 +50,7 @@
             color="primary"
             class="full-width q-mt-md"
             :loading="isLoading"
-            :disable="!categoryId || !userInput.name || !userInput.description"
+            :disable="!cStore.currentID || !userInput.name || !userInput.description"
             @click.prevent="onSubmitClick" />
         </template>
       </FormCreateNew>
@@ -59,22 +62,15 @@
 <script setup lang="ts">
 import { ref, reactive, onUnmounted, watch } from 'vue'
 import { useCategoriesStore } from 'src/stores/categories'
-import { useSubcategoriesStore } from 'src/stores/subcategories'
 import { useQuasar } from 'quasar'
 import FormCreateNew from 'src/components/FormCreateNew.vue'
 import DialogResultMsg from 'src/components/DialogResultMsg.vue'
 import ServerErrorMessage from 'src/components/ServerErrorMessage.vue'
 
 const cStore = useCategoriesStore()
-const subStore = useSubcategoriesStore()
 const $q = useQuasar()
 
 // form
-interface OptionForCategory {
-  label: string
-  value: number
-}
-const categoryId = ref<OptionForCategory>() // the number is: categoryId.value.value
 const userInput = reactive({
   name: '',
   description: '',
@@ -84,51 +80,39 @@ const isLoading = ref(false)
 const dialogInfo = ref({ status: '', title: '', body: '' })
 
 const onSubmitClick = async () => {
-  isLoading.value = true
   try {
-    if (!categoryId.value) throw new Error('no category id')
-    // call api
-    const newSubToSend = {
+    if (!cStore.currentID) {
+      throw new Error('未選擇類別')
+    }
+    isLoading.value = true
+    const newSub = {
       name: userInput.name,
       description: userInput.description,
-      category_id: categoryId.value.value,
+      category_id: cStore.currentID,
     }
-    await subStore.createNew(newSubToSend)
-    // error
-    isLoading.value = false
-    // update pinia state
-    // grab the new sub id from api response(serverResposeStatus)
-    const insertId = subStore.serverResposeStatus?.insertId
-    if (!insertId) throw new Error('server error')
-    const newSubcategory = {
-      name: userInput.name,
-      description: userInput.description,
-      category_id: categoryId.value.value,
-      id: insertId,
-    }
-    subStore.createNewLocal(newSubcategory)
-    // show success
+    await cStore.createNewSub(newSub)
     isLoading.value = false
     dialogInfo.value.status = 'positive'
     dialogInfo.value.title = '新增成功'
     dialogInfo.value.body = '自動關閉彈出視窗...'
   } catch (error) {
-    console.log(error)
     dialogInfo.value.status = 'negative'
-    dialogInfo.value.title = subStore.errorMessage || '伺服器錯誤'
+    if (typeof error === 'string') {
+      dialogInfo.value.title = error
+    } else {
+      dialogInfo.value.title = '伺服器錯誤'
+    }
     dialogInfo.value.body = '新增失敗，請稍後再試一次。'
   } finally {
     openDialog()
-    return
   }
 }
 
 const resetAll = () => {
   isLoading.value = false
-  categoryId.value = undefined
+  cStore.currentID = null
   userInput.name = ''
   userInput.description = ''
-  subStore.clearStatus()
 }
 
 const openDialog = () => {
@@ -149,7 +133,7 @@ onUnmounted(() => {
 watch(
   () => cStore.categories,
   async () => {
-    if (!cStore.optionsForSelct.length) {
+    if (!cStore.categories.length) {
       await cStore.getAll()
     }
   },

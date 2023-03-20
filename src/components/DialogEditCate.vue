@@ -89,24 +89,23 @@ const onEditSubmitClick = async () => {
   submitLoading.value = true
   try {
     if (!props.category.id || !inputName.value)
-      throw new Error('no input found')
-    const newCategory = { id: props.category.id, name: inputName.value }
+      throw new Error('欄位不可為空白')
     // call api
-    await cStore.updateCurrent(newCategory)
-    // update pinia state
-    cStore.updateCurrentLocal(newCategory)
+    await cStore.updateCurrent(inputName.value)
     // show notification
     submitLoading.value = false
     statusMessage.value = '更新成功!'
     triggerPpsitive()
   } catch (error) {
     console.log(error)
-    // show error
-    statusMessage.value = cStore.errorMessage || '伺服器錯誤'
+    if (typeof error === 'string') {
+      statusMessage.value = error
+    } else {
+      statusMessage.value = '伺服器錯誤'
+    }
     triggerNegative()
   } finally {
     autoClose()
-    return
   }
 }
 
@@ -124,7 +123,6 @@ const resetAll = () => {
   submitLoading.value = false
   submitDisabled.value = false
   clearTimeout(timeoutID.value)
-  cStore.clearStatus()
 }
 
 onUnmounted(() => {

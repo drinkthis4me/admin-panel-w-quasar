@@ -1,6 +1,6 @@
-import type { Category } from 'src/types/category'
+import type { Basetype } from 'src/types/basetype'
 
-export interface Subcategory extends Category {
+export interface Subcategory extends Basetype {
   description: string
   category_id: number  
 }

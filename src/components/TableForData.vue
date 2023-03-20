@@ -70,10 +70,8 @@ import DialogEditSub from './DialogEditSub.vue'
 import DialogDeleteCate from './DialogDeleteCate.vue'
 import DialogDeleteSub from './DialogDeleteSub.vue'
 import { useCategoriesStore } from 'src/stores/categories'
-import { useSubcategoriesStore } from 'src/stores/subcategories'
 
 const cStore = useCategoriesStore()
-const subStore = useSubcategoriesStore()
 const $q = useQuasar()
 
 // variables naming conflict:
@@ -96,21 +94,25 @@ const currentRow = ref<any>()
 const onEditClick = (row: any) => {
   currentRow.value = row
   if (row && row.description) {
+    cStore.currentID = row.category_id
+    cStore.currentSubID = row.id
     openDialogEditSub()
-    subStore.currentSubID = row.id
+    // subStore.currentSubID = row.id
   } else if (row) {
-    openDialogEditCate()
     cStore.currentID = row.id
+    openDialogEditCate()
   }
 }
 const onDeleteClick = (row: any) => {
   currentRow.value = row
   if (row && row.description) {
+    cStore.currentID = row.category_id
+    cStore.currentSubID = row.id
     openDialogDeleteSub()
-    subStore.currentSubID = row.id
+    // subStore.currentSubID = row.id
   } else if (row) {
-    openDialogDeleteCate()
     cStore.currentID = row.id
+    openDialogDeleteCate()
   }
 }
 const openDialogEditCate = () => {

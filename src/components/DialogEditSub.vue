@@ -52,7 +52,7 @@
 <script setup lang="ts">
 import { useDialogPluginComponent } from 'quasar'
 import { ref, reactive, watch, watchEffect, onUnmounted } from 'vue'
-import { useSubcategoriesStore } from 'src/stores/subcategories'
+import { useCategoriesStore } from 'src/stores/categories'
 import { useQuasar } from 'quasar'
 import type { Subcategory } from 'src/types/subcategory'
 
@@ -62,7 +62,7 @@ const props = defineProps<{
 defineEmits([...useDialogPluginComponent.emits])
 const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } =
   useDialogPluginComponent()
-const subStore = useSubcategoriesStore()
+const cStore = useCategoriesStore()
 const $q = useQuasar()
 // inputs
 const statusMessage = ref('')
@@ -116,30 +116,28 @@ const onEditSubmitClick = async () => {
       !props.subcategory.category_id ||
       !props.subcategory.category_id
     ) {
-      throw new Error('no input found')
+      throw new Error('欄位不可為空白')
     }
-    const newSubcategory = {
-      id: props.subcategory.id,
+    const newSubcategory = {     
       name: userInput.name,
-      description: userInput.description,
-      category_id: props.subcategory.category_id,
+      description: userInput.description,   
     }
     // call api
-    await subStore.updateCurrent(newSubcategory)
-    // update pinia state
-    subStore.updateCurrentLocal(newSubcategory)
+    await cStore.updateCurrentSub(newSubcategory)    
     // show notification
     submitLoading.value = false
     statusMessage.value = '更新成功!'
     triggerPpsitive()
   } catch (error) {
     console.log(error)
-    //show error
-    statusMessage.value = subStore.errorMessage
+    if (typeof error === 'string') {
+      statusMessage.value = error
+    } else {
+      statusMessage.value = '伺服器錯誤'
+    }
     triggerNegative()
   } finally {
     autoClose()
-    return
   }
 }
 
@@ -157,7 +155,6 @@ const resetAll = () => {
   submitLoading.value = false
   submitDisabled.value = false
   clearTimeout(timeoutID.value)
-  subStore.clearStatus()
 }
 onUnmounted(() => {
   resetAll()

@@ -1,7 +1,7 @@
 <template>
   <q-dialog
     ref="dialogRef"
-    @hide="onDialogHide()"
+    @hide="onDialogHide"
     transition-show="scale"
     transition-hide="scale">
     <q-card :class="['text-white', cardClass]" style="width: 300px">
@@ -22,7 +22,7 @@
   </q-dialog>
 </template>
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useDialogPluginComponent } from 'quasar'
 
 interface Message {
@@ -34,8 +34,7 @@ const props = defineProps<{
   message: Message
 }>()
 defineEmits([...useDialogPluginComponent.emits])
-const { dialogRef, onDialogHide, onDialogOK } =
-  useDialogPluginComponent()
+const { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent()
 const cardClass = computed(() =>
   props.message.status == 'positive' ? 'bg-positive' : 'bg-negative'
 )
@@ -43,11 +42,14 @@ const cardClass = computed(() =>
 const timeoutID = ref<NodeJS.Timeout>()
 const autoClose = () => {
   timeoutID.value = setTimeout(() => {
-    onDialogOK()
+    onDialogHide()
   }, 2000)
 }
 
 onMounted(() => {
   autoClose()
+})
+onUnmounted(() => {
+  timeoutID.value = undefined
 })
 </script>

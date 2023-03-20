@@ -10,26 +10,28 @@
       </q-breadcrumbs>
     </div>
     <div
-      v-if="cStore.optionsForSelct.length"
+      v-if="cStore.categories && cStore.categories.length"
       class="column items-center full-width">
       <div class="q-pa-sm full-width" style="max-width: 500px">
         <q-select
-          v-model="selectedCategory"
-          :options="cStore.optionsForSelct"
+          v-model="cStore.currentID"
+          :options="cStore.categories"
           emit-value
           map-options
+          option-label="name"
+          option-value="id"
           label="選擇類別"
           outlined
           transition-show="scale"
           transition-hide="scale" />
       </div>
       <div
-        v-if="selectedCategory"
+        v-if="cStore.currentSubs"
         class="q-pa-sm full-width"
         style="max-width: 800px">
         <TableForData
           :title="'子類別'"
-          :rows="filteredRows"
+          :rows="cStore.currentSubs"
           :columns="columns" />
       </div>
       <div v-else class="q-pa-sm q-mt-md text-h5">⬆ 選擇類別</div>
@@ -39,15 +41,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watchEffect } from 'vue'
+import { ref, watch } from 'vue'
 import { QTableProps } from 'quasar'
 import { useCategoriesStore } from 'src/stores/categories'
-import { useSubcategoriesStore } from 'src/stores/subcategories'
 import TableForData from 'components/TableForData.vue'
 import ServerErrorMessage from 'src/components/ServerErrorMessage.vue'
 
 const cStore = useCategoriesStore()
-const subStore = useSubcategoriesStore()
 
 // table columns
 const columns = ref<QTableProps['columns']>([
@@ -57,7 +57,6 @@ const columns = ref<QTableProps['columns']>([
     label: 'ID',
     align: 'left',
     field: row => row.id,
-    format: val => (val === 0 ? '' : `${val}`),
     sortable: true,
   },
   {
@@ -79,8 +78,7 @@ const columns = ref<QTableProps['columns']>([
     name: 'category_id',
     label: '分類',
     field: 'category_id',
-    format: val =>
-      `${cStore.optionsForSelct?.find(o => o.value == val)?.label}`,
+    format: val => `${cStore.categories?.find(c => c.id === val)?.name}`,
     align: 'center',
     sortable: true,
   },
@@ -91,28 +89,15 @@ const columns = ref<QTableProps['columns']>([
     align: 'center',
   },
 ])
-// table rows
-const filteredRows = computed(() => {
-  if (selectedCategory.value) {
-    return subStore.subcategories.filter(
-      sub => sub.category_id === selectedCategory.value
-    )
-  } else {
-    return []
-  }
-})
-// v-model for q-select
-const selectedCategory = ref()
 
-// fetch content if empty
-watchEffect(async () => {
-  if (!cStore.optionsForSelct.length) {
-    await cStore.getAll()
-  }
-})
-watchEffect(async () => {
-  if (!subStore.subcategories.length) {
-    await subStore.getAll()
-  }
-})
+// fetch categories if empty
+watch(
+  () => cStore.categories,
+  async () => {
+    if (!cStore.categories.length) {
+      await cStore.getAll()
+    }
+  },
+  { immediate: true }
+)
 </script>

@@ -9,7 +9,9 @@
         <q-breadcrumbs-el label="新增類別" />
       </q-breadcrumbs>
     </div>
-    <div v-if="cStore.categories.length" class="q-mt-md row justify-center full-width">
+    <div
+      v-if="cStore.categories.length"
+      class="q-mt-md row justify-center full-width">
       <!-- form -->
       <FormCreateNew>
         <template #title>
@@ -57,37 +59,31 @@ const isLoading = ref(false)
 const dialogInfo = ref({ status: '', title: '', body: '' })
 
 const onSubmitClick = async () => {
-  isLoading.value = true
   try {
-    if (!inputName.value) throw new Error('no input found')
-    // call api
+    isLoading.value = true
+
     await cStore.createNew(inputName.value)
-    //update pinia state
-    // grab the new id from api response(serverResposeStatus)
-    const insertId = cStore.serverResposeStatus?.insertId
-    if (!insertId) throw new Error('server error')
-    const newC = { name: inputName.value, id: insertId }
-    cStore.createNewLocal(newC)
-    // show success
+
     isLoading.value = false
     dialogInfo.value.status = 'positive'
     dialogInfo.value.title = '新增成功'
     dialogInfo.value.body = '自動關閉彈出視窗...'
   } catch (error) {
-    console.log(error)
     dialogInfo.value.status = 'negative'
-    dialogInfo.value.title = cStore.errorMessage || '伺服器錯誤'
+    if (typeof error === 'string') {
+      dialogInfo.value.title = error
+    } else {
+      dialogInfo.value.title = '伺服器錯誤'
+    }
     dialogInfo.value.body = '新增失敗，請稍後再試一次。'
   } finally {
     openDialog()
-    return
   }
 }
 
 const resetAll = () => {
   isLoading.value = false
   inputName.value = ''
-  cStore.clearStatus()
 }
 
 const openDialog = () => {
