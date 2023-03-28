@@ -143,8 +143,9 @@ export const useCategoriesStore = defineStore('categories', () => {
         reject('找不到新類別名稱')
         return
       }
+      // refresh categories
+      await getAll()
       // check duplicate
-      if (!categories.value) await getAll()
       let isDuplicate = false
       if (categories.value.length > 0) {
         isDuplicate = categories.value.some(
@@ -197,10 +198,9 @@ export const useCategoriesStore = defineStore('categories', () => {
         reject('找不到新子類別資料')
         return
       }
+      // refresh categories
+      await getAll()
       // check duplicate
-      if (!categories.value || !categories.value.length) {
-        await getAll()
-      }
       const currentC = categories.value.find(c => c.id === currentID.value)
       if (!currentC) {
         reject('找不到所屬類別')
@@ -254,10 +254,9 @@ export const useCategoriesStore = defineStore('categories', () => {
         reject('找不到新類別')
         return
       }
+      // refresh categories
+      await getAll()
       // check duplicate
-      if (!categories.value || categories.value.length < 0) {
-        await getAll()
-      }
       const isDuplicate = categories.value.some(
         c => c.name.toLowerCase() === newName.toLowerCase()
       )
@@ -304,15 +303,19 @@ export const useCategoriesStore = defineStore('categories', () => {
         reject('找不到新子類別')
         return
       }
+      // refresh categories
+      await getAll()
       // check duplicate
       const currentC = categories.value.find(c => c.id === currentID.value)
       if (!currentC) {
         reject('找不到所屬類別')
         return
       }
-      const isDuplicate = currentC.subcategories.some(
-        sub => sub.name.toLowerCase() === newSubcategory.name.toLowerCase()
-      )
+      const isDuplicate = currentC.subcategories
+        .filter(sub => sub.id !== currentSubID.value)
+        .some(
+          sub => sub.name.toLowerCase() === newSubcategory.name.toLowerCase()
+        )
       if (isDuplicate) {
         reject('名稱重複')
         return
@@ -348,6 +351,9 @@ export const useCategoriesStore = defineStore('categories', () => {
         reject('找不到欲刪除的類別')
         return
       }
+      // refresh categories
+      await getAll()
+      // find target index
       const currentCIndex = categories.value.findIndex(
         c => c.id === currentID.value
       )
@@ -388,6 +394,8 @@ export const useCategoriesStore = defineStore('categories', () => {
         reject('找不到欲刪除的子類別')
         return
       }
+      // refresh categories
+      await getAll()
       // call api
       const url = `${API_URL}/subcategories/${currentSubID.value}`
       await axios
