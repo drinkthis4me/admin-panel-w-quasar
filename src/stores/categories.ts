@@ -7,117 +7,110 @@ import type { Subcategory } from 'src/types/subcategory'
 const API_URL = 'http://localhost:3000/mall'
 
 export const useCategoriesStore = defineStore('categories', () => {
-  const categories = ref<Category[]>([])
+  // const categories = ref<Category[]>([])
   // dummy data
-  // const categories = ref<Category[]>([
-  //   {
-  //     id: 10001,
-  //     name: '服裝',
-  //     subcategories: [
-  //       {
-  //         id: 2,
-  //         name: '男士上衣',
-  //         description: 'T-shirt, 連帽T, 襯衫, 內衣',
-  //         category_id: 10001,
-  //       },
-  //       {
-  //         id: 7,
-  //         name: '男士褲裝',
-  //         description: 'Pants, Jeans and Leggings',
-  //         category_id: 10001,
-  //       },
-  //     ],
-  //   },
-  //   {
-  //     id: 10002,
-  //     name: '食品',
-  //     subcategories: [
-  //       {
-  //         id: 9,
-  //         name: '肉類',
-  //         description: '牛雞豬魚',
-  //         category_id: 10002,
-  //       },
-  //       {
-  //         id: 10,
-  //         name: 'Drinks',
-  //         description: 'Soda, Juice, Milk and Water',
-  //         category_id: 10002,
-  //       },
-  //       {
-  //         id: 11,
-  //         name: 'Snacks',
-  //         description: 'Chips, Candies and Crackers',
-  //         category_id: 10002,
-  //       },
-  //       {
-  //         id: 12,
-  //         name: 'Fresh Vegetables',
-  //         description: 'Sourced from Local Farmers',
-  //         category_id: 10002,
-  //       },
-  //     ],
-  //   },
-  //   {
-  //     id: 10010,
-  //     name: '3C',
-  //     subcategories: [
-  //       {
-  //         id: 14,
-  //         name: 'Notebooks',
-  //         description: 'MacBook, MS Surface, Asus, MSI, HP',
-  //         category_id: 10010,
-  //       },
-  //       {
-  //         id: 15,
-  //         name: 'LCD Monitors',
-  //         description: 'Asus, BenQ, SAMSUNG, LG, MSI',
-  //         category_id: 10010,
-  //       },
-  //     ],
-  //   },
-  //   {
-  //     id: 10011,
-  //     name: '家用電器',
-  //     subcategories: [
-  //       {
-  //         id: 16,
-  //         name: 'Tables',
-  //         description: 'Handcraft Wooden Tables',
-  //         category_id: 10011,
-  //       },
-  //     ],
-  //   },
-  //   {
-  //     id: 10028,
-  //     name: '美妝',
-  //     subcategories: [],
-  //   },
-  //   {
-  //     id: 10041,
-  //     name: '清潔',
-  //     subcategories: [
-  //       {
-  //         id: 33,
-  //         name: '浴廁清潔',
-  //         description: '水桶, 地板刷',
-  //         category_id: 10041,
-  //       },
-  //       {
-  //         id: 45,
-  //         name: '廚房清潔',
-  //         description: '抹布, 拖把',
-  //         category_id: 10041,
-  //       },
-  //       {
-  //         id: 46,
-  //         name: '車用',
-  //         description: '手持吸塵器',
-  //         category_id: 10041,
-  //       },
-  //     ],
-  //   },
-  // ])
+  const categories = ref<Category[]>([
+    {
+      id: 10001,
+      name: '男性服裝',
+      subcategories: [
+        {
+          id: 2,
+          name: '男上衣',
+          description: 'T-shirt, POLO衫, 襯衫, 內衣',
+          category_id: 10001,
+        },
+        {
+          id: 7,
+          name: '男褲裝',
+          description: '牛仔褲, 運動褲, 休閒褲',
+          category_id: 10001,
+        },
+      ],
+    },
+    {
+      id: 10002,
+      name: '女性服裝',
+      subcategories: [
+        {
+          id: 9,
+          name: '女上衣',
+          description: 'T-shirt, POLO衫, 襯衫, 內搭',
+          category_id: 10002,
+        },
+        {
+          id: 10,
+          name: '女褲裝',
+          description: '長褲, 短褲, 牛仔褲, 運動褲',
+          category_id: 10002,
+        },
+      ],
+    },
+    {
+      id: 10010,
+      name: '童裝',
+      subcategories: [
+        {
+          id: 14,
+          name: '嬰幼兒裝',
+          description: '新生兒 baby 專區',
+          category_id: 10010,
+        },
+        {
+          id: 15,
+          name: '男女童裝',
+          description: '上衣, 外套, 褲裝, 洋裝',
+          category_id: 10010,
+        },
+      ],
+    },
+    {
+      id: 10011,
+      name: '運動',
+      subcategories: [
+        {
+          id: 16,
+          name: 'Tables',
+          description: 'Handcraft Wooden Tables',
+          category_id: 10011,
+        },
+      ],
+    },
+    {
+      id: 10028,
+      name: '潮流',
+      subcategories: [],
+    },
+    {
+      id: 10041,
+      name: '清潔',
+      subcategories: [
+        {
+          id: 33,
+          name: '浴廁清潔',
+          description: '水桶, 地板刷',
+          category_id: 10041,
+        },
+        {
+          id: 45,
+          name: '廚房清潔',
+          description: '抹布, 拖把',
+          category_id: 10041,
+        },
+        {
+          id: 46,
+          name: '車用',
+          description: '手持吸塵器',
+          category_id: 10041,
+        },
+      ],
+    },
+    {
+      id: 10048,
+      name: 'foobar',
+      subcategories: [],
+    },
+  ])
   const currentID = ref<number | null>(null)
   const currentSubID = ref<number | null>(null)
   const currentSubs = computed(

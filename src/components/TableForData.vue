@@ -14,7 +14,7 @@
     :loading="isLoading">
     <!-- action slot -->
     <template #body-cell-actions="props">
-      <q-td class=" no-wrap justify-center q-gutter-x-sm">
+      <q-td class="no-wrap justify-center q-gutter-x-sm">
         <q-btn
           color="primary"
           icon="edit"
@@ -30,7 +30,11 @@
     <!-- /acton slot -->
     <!-- search slot -->
     <template #top-right>
-      <q-input v-model="searchFilter" type="text" placeholder="尋找" :disable="!rows?.length">
+      <q-input
+        v-model="searchFilter"
+        type="text"
+        placeholder="尋找"
+        :disable="!rows?.length">
         <template #append>
           <q-icon name="search" />
         </template>
@@ -59,6 +63,13 @@
       </q-inner-loading>
     </template>
     <!-- /loading state slot -->
+    <!-- image slot -->
+    <template #body-cell-image="props">
+      <q-td>
+        <q-img :src="props.value" alt="product image" width="50px" ratio="1" />
+      </q-td>
+    </template>
+    <!-- /image slot -->
   </q-table>
 </template>
 
@@ -69,9 +80,13 @@ import DialogEditCate from './DialogEditCate.vue'
 import DialogEditSub from './DialogEditSub.vue'
 import DialogDeleteCate from './DialogDeleteCate.vue'
 import DialogDeleteSub from './DialogDeleteSub.vue'
+import DialogEditProd from './DialogEditProd.vue'
+import DialogDeleteProd from './DialogDeleteProd.vue'
 import { useCategoriesStore } from 'src/stores/categories'
+import { useProductStore } from 'src/stores/products'
 
 const cStore = useCategoriesStore()
+const pStore = useProductStore()
 const $q = useQuasar()
 
 // variables naming conflict:
@@ -93,7 +108,10 @@ const searchFilter = ref('')
 const currentRow = ref<any>()
 const onEditClick = (row: any) => {
   currentRow.value = row
-  if (row && row.description) {
+  if (row && row.price) {
+    pStore.currentPID = row.id
+    openDialogEditProd()
+  } else if (row && row.description) {
     cStore.currentID = row.category_id
     cStore.currentSubID = row.id
     openDialogEditSub()
@@ -105,7 +123,11 @@ const onEditClick = (row: any) => {
 }
 const onDeleteClick = (row: any) => {
   currentRow.value = row
-  if (row && row.description) {
+  if(row && row.price){
+    pStore.currentPID = row.id
+    openDialogDeleteProd()
+  }
+  else if (row && row.description) {
     cStore.currentID = row.category_id
     cStore.currentSubID = row.id
     openDialogDeleteSub()
@@ -145,6 +167,22 @@ const openDialogDeleteSub = () => {
     componentProps: {
       subcategory: currentRow.value,
     },
+  })
+}
+const openDialogEditProd = () => {
+  $q.dialog({
+    component: DialogEditProd,
+    componentProps: {
+      product: currentRow.value,
+    },
+  })
+}
+const openDialogDeleteProd = ()=>{
+  $q.dialog({
+    component: DialogDeleteProd,
+    componentProps: {
+      product: currentRow.value
+    }
   })
 }
 </script>

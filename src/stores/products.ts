@@ -7,7 +7,31 @@ const API_URL = 'http://localhost:3000/mall'
 
 export const useProductStore = defineStore('product', () => {
   // states
-  const products = ref<Product[]>([])
+  // const products = ref<Product[]>([])
+  const products = ref<Product[]>([
+    {
+      id: 1,
+      sub_category_id: 2,
+      name: 'Basic T-shirt',
+      description: 'Everyday cotten T-shirt',
+      size: 'M',
+      color: 'White',
+      price: 200,
+      quantity: 10,
+      image_path: 'https://picsum.photos/800/600',
+    },
+    {
+      id: 3,
+      sub_category_id: 2,
+      name: 'Nike workout T-shirt',
+      description: '圓領 男款 運動 棉質',
+      size: 'M',
+      color: 'white',
+      price: 500,
+      quantity: 20,
+      image_path: 'https://picsum.photos/800/600',
+    },
+  ])
   const currentPID = ref<number | null>(null)
 
   // actions
@@ -21,7 +45,7 @@ export const useProductStore = defineStore('product', () => {
       })
       .catch(err => console.log(err))
   }
-  const getTen = async () =>{
+  const getTen = async () => {
     const url = `${API_URL}/products`
     await axios
       .get(url)
@@ -41,13 +65,13 @@ export const useProductStore = defineStore('product', () => {
         !newProduct.color ||
         !newProduct.price ||
         !newProduct.quantity ||
-        !newProduct.subcategory_id
+        !newProduct.sub_category_id
       ) {
         reject('找不到新產品資料')
         return
       }
       // call api
-      const url = `${API_URL}/subcategories/${newProduct.subcategory_id}/products`
+      const url = `${API_URL}/subcategories/${newProduct.sub_category_id}/products`
       await axios
         .post(url, newProduct)
         .then(res => {
@@ -84,7 +108,7 @@ export const useProductStore = defineStore('product', () => {
         !newProduct.color ||
         !newProduct.price ||
         !newProduct.quantity ||
-        !newProduct.subcategory_id ||
+        !newProduct.sub_category_id ||
         !currentPID.value
       ) {
         reject('找不到新產品資料')
@@ -153,6 +177,6 @@ export const useProductStore = defineStore('product', () => {
     getAll,
     createNew,
     updateCurrent,
-    deleteCurrent
+    deleteCurrent,
   }
 })

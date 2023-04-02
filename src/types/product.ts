@@ -2,10 +2,10 @@ import type { Basetype } from './basetype'
 
 export interface Product extends Basetype {
   description: string
-  subcategory_id: number
+  sub_category_id: number
   size: string
   color: string
-  image_path?: string
+  image_path?: string | null
   price: number
   quantity: number
 }

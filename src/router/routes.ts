@@ -37,6 +37,16 @@ const routes: RouteRecordRaw[] = [
         name: 'create subcategory',
         component: () => import('src/pages/products/AddSubPage.vue'),
       },
+      {
+        path: 'list-products',
+        name: 'product list',
+        component: () => import('src/pages/products/ListProductsPage.vue'),
+      },
+      {
+        path: 'add-product',
+        name: 'create product',
+        component: () => import('src/pages/products/AddProductPage.vue'),
+      },
     ],
   },
 

@@ -13,6 +13,11 @@
         icon="check"
         label="子類別總覽"
         to="/home/list-subcategories" />
+      <q-btn
+        color="primary"
+        icon="check"
+        label="產品總覽"
+        to="/home/list-products" />
     </div>
   </q-page>
 </template>

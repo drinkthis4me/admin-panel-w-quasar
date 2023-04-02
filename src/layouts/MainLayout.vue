@@ -82,8 +82,8 @@ const productSettings = ref<Menu>({
     {
       title: '產品',
       children: [
-        { title: '產品總覽', link: '#' },
-        { title: '新增產品', link: '#' },
+        { title: '產品總覽', link: '/home/list-products' },
+        { title: '新增產品', link: '/home/add-product' },
       ],
     },
   ],
